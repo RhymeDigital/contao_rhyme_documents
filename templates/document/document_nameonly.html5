@@ -1,0 +1,6 @@
+
+<div class="layout_nameonly arc_<?php echo $this->archive->id; ?> block<?php echo $this->class; ?>">
+
+  <a href="<?php echo $this->download; ?>" title=""><?php echo $this->documentHeadline; ?></a>
+
+</div>
