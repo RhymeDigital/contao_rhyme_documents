@@ -2,26 +2,18 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
-/**
- * Run in a custom namespace, so the class can be replaced
- */
-namespace HBAgency\Model;
+namespace Rhyme\Model;
 
 
 /**
  * Reads and writes document archives
  *
- * @copyright  HB Agency 2015
- * @author     Blair Winans <bwinans@hbagency.com>
- * @author     Adam Fisher <afisher@hbagency.com>
+ * @copyright  Rhyme 2021
+
+
  * @package    Document_Management
  */
 class DocumentArchive extends \Model

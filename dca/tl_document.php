@@ -2,11 +2,6 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
@@ -31,11 +26,11 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 		'enableVersioning'            => true,
 		'onload_callback' => array
 		(
-			array('HBAgency\Backend\Document\Callbacks', 'checkPermission'),
+			array('Rhyme\Backend\Document\Callbacks', 'checkPermission'),
 		),
 		'onsubmit_callback' => array
 		(
-			array('HBAgency\Backend\Document\Callbacks', 'adjustTime'),
+			array('Rhyme\Backend\Document\Callbacks', 'adjustTime'),
 		),
 		'sql' => array
 		(
@@ -55,9 +50,9 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 		(
 			'mode'                    => 4,
 			'fields'                  => array('date DESC'),
-			'headerFields'            => array('title', 'jumpTo', 'tstamp', 'protected'),
+			'headerFields'            => array('headline', 'jumpTo', 'tstamp', 'protected'),
 			'panelLayout'             => 'filter;sort,search,limit',
-			'child_record_callback'   => array('HBAgency\Backend\Document\Callbacks', 'listDocuments'),
+			'child_record_callback'   => array('Rhyme\Backend\Document\Callbacks', 'listDocuments'),
 			'child_record_class'      => 'no_padding'
 		),
 		'global_operations' => array
@@ -102,14 +97,14 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 				'label'               => &$GLOBALS['TL_LANG']['tl_document']['toggle'],
 				'icon'                => 'visible.gif',
 				'attributes'          => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-				'button_callback'     => array('\HBAgency\Backend\Document\Callbacks', 'toggleIcon')
+				'button_callback'     => array('\Rhyme\Backend\Document\Callbacks', 'toggleIcon')
 			),
 			'feature' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_document']['feature'],
 				'icon'                => 'featured.gif',
 				'attributes'          => 'onclick="Backend.getScrollOffset();return DocManRequest.toggleFeatured(this,%s)"',
-				'button_callback'     => array('\HBAgency\Backend\Document\Callbacks', 'iconFeatured')
+				'button_callback'     => array('\Rhyme\Backend\Document\Callbacks', 'iconFeatured')
 			),
 			'show' => array
 			(
@@ -170,7 +165,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 			'eval'                    => array('rgxp'=>'alias', 'unique'=>true, 'maxlength'=>128, 'tl_class'=>'w50'),
 			'save_callback' => array
 			(
-				array('HBAgency\Backend\Document\Callbacks', 'generateAlias')
+				array('Rhyme\Backend\Document\Callbacks', 'generateAlias')
 			),
 			'sql'                     => "varchar(128) COLLATE utf8_bin NOT NULL default ''"
 		),
@@ -235,7 +230,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 			'eval'                    => array('filesOnly'=>true, 'fieldType'=>'radio'),
 			'save_callback'           => array
 			(
-    			array('HBAgency\Backend\Document\Callbacks', 'checkRequired'),
+    			array('Rhyme\Backend\Document\Callbacks', 'checkRequired'),
 			),
 			'sql'                     => "binary(16) NULL"
 		),
@@ -248,7 +243,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 			'eval'                    => array('decodeEntities'=>true, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'save_callback'           => array
 			(
-    			array('HBAgency\Backend\Document\Callbacks', 'checkRequired'),
+    			array('Rhyme\Backend\Document\Callbacks', 'checkRequired'),
 			),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),

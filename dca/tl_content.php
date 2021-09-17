@@ -2,11 +2,6 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
@@ -36,7 +31,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['document_template'] = array
 	'default'                 => 'document_latest',
 	'exclude'                 => true,
 	'inputType'               => 'select',
-	'options_callback'        => array('HBAgency\Backend\Module\Document\Callbacks', 'getDocumentTemplates'),
+	'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getDocumentTemplates'),
 	'eval'                    => array('tl_class'=>'w50', 'chosen'=>true),
 	'sql'                     => "varchar(32) NOT NULL default ''"
 );

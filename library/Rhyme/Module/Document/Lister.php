@@ -2,27 +2,22 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
  
-namespace HBAgency\Module\Document;
+namespace Rhyme\Module\Document;
 
-use HBAgency\Module\Document as Document_Module;
-use HBAgency\Model\DocumentArchive as DocumentArchiveModel;
-use HBAgency\Model\Document as DocumentModel;
+use Contao\Input;
+use Contao\Config;
+use Contao\Pagination;
+use Contao\BackendTemplate;
+use Rhyme\Module\Document as Document_Module;
+use Rhyme\Helper\DocumentHelper;
+use Rhyme\Model\Document as DocumentModel;
 
 /**
- * Class List
- *
- * Front end module "document list".
- * @copyright  HB Agency 2014
- * @author     Blair Winans <bwinans@hbagency.com>
- * @package    Document_Management
+ * Class Lister
+ * @package Rhyme\Module\Document
  */
 class Lister extends Document_Module
 {
@@ -42,9 +37,9 @@ class Lister extends Document_Module
 	{
 		if (TL_MODE == 'BE')
 		{
-			$objTemplate = new \BackendTemplate('be_wildcard');
+			$objTemplate = new BackendTemplate('be_wildcard');
 
-			$objTemplate->wildcard = '### ' . utf8_strtoupper($GLOBALS['TL_LANG']['FMD']['documentlist'][0]) . ' ###';
+			$objTemplate->wildcard = '### ' . \utf8_strtoupper($GLOBALS['TL_LANG']['FMD']['documentlist'][0]) . ' ###';
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
@@ -53,10 +48,10 @@ class Lister extends Document_Module
 			return $objTemplate->parse();
 		}
 
-		$this->document_archives = $this->sortOutProtected(deserialize($this->document_archives));
+		$this->document_archives = $this->sortOutProtected(\deserialize($this->document_archives));
 
 		// Return if there are no archives
-		if (!is_array($this->document_archives) || empty($this->document_archives))
+		if (!\is_array($this->document_archives) || empty($this->document_archives))
 		{
 			return '';
 		}
@@ -67,10 +62,11 @@ class Lister extends Document_Module
 
 	/**
 	 * Generate the module
+     * @throws \Exception
 	 */
 	protected function compile()
 	{
-		$offset = intval($this->skipFirst);
+		$offset = \intval($this->skipFirst);
 		$limit = null;
 
 		// Maximum number of items
@@ -112,29 +108,29 @@ class Lister extends Document_Module
 			// Adjust the overall limit
 			if (isset($limit))
 			{
-				$total = min($limit, $total);
+				$total = \min($limit, $total);
 			}
 
 			// Get the current page
-			$id = 'page_n' . $this->id;
-			$page = \Input::get($id) ?: 1;
+			$id = 'page_doc_' . $this->id;
+			$page = Input::get($id) ?: 1;
 
 			// Do not index or cache the page if the page number is outside the range
-			if ($page < 1 || $page > max(ceil($total/$this->perPage), 1))
+			if ($page < 1 || $page > \max(\ceil($total/$this->perPage), 1))
 			{
 				global $objPage;
 				$objPage->noSearch = 1;
 				$objPage->cache = 0;
 
 				// Send a 404 header
-				header('HTTP/1.1 404 Not Found');
+				\header('HTTP/1.1 404 Not Found');
 				return;
 			}
 
 			// Set limit and offset
 			$limit = $this->perPage;
-			$offset += (max($page, 1) - 1) * $this->perPage;
-			$skip = intval($this->skipFirst);
+			$offset += (\max($page, 1) - 1) * $this->perPage;
+			$skip = \intval($this->skipFirst);
 
 			// Overall limit
 			if ($offset + $limit > $total + $skip)
@@ -143,7 +139,7 @@ class Lister extends Document_Module
 			}
 
 			// Add the pagination menu
-			$objPagination = new \Pagination($total, $this->perPage, \Config::get('maxPaginationLinks'), $id);
+			$objPagination = new Pagination($total, $this->perPage, Config::get('maxPaginationLinks'), $id);
 			$this->Template->pagination = $objPagination->generate("\n  ");
 		}
 
@@ -160,7 +156,7 @@ class Lister extends Document_Module
 		// Add the articles
 		if ($objDocuments !== null)
 		{
-			$this->Template->articles = $this->parseDocuments($objDocuments);
+			$this->Template->articles = DocumentHelper::parseDocuments($objDocuments, $this);
 		}
 
 		$this->Template->archives = $this->document_archives;

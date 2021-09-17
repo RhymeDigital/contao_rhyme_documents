@@ -2,30 +2,19 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
-/**
- * Run in a custom namespace, so the class can be replaced
- */
-namespace HBAgency\Model;
+namespace Rhyme\Model;
 
+use Contao\Model;
+use Contao\System;
 
 /**
- * Reads and writes documents
- *
- * @package   Models
- * @copyright  HB Agency 2015
- * @author     Blair Winans <bwinans@hbagency.com>
- * @author     Adam Fisher <afisher@hbagency.com>
- * @package    Document_Management
+ * Class Document
+ * @package Rhyme\Model
  */
-class Document extends \Model
+class Document extends Model
 {
 
 	/**
@@ -62,7 +51,7 @@ class Document extends \Model
         // !HOOK: custom actions
         if (isset($GLOBALS['TL_HOOKS']['findDocuments']) && is_array($GLOBALS['TL_HOOKS']['findDocuments'])) {
             foreach ($GLOBALS['TL_HOOKS']['findDocuments'] as $callback) {
-                $objCallback = \System::importStatic($callback[0]);
+                $objCallback = System::importStatic($callback[0]);
                 $objCallback->{$callback[1]}($arrOptions, static::$strCurrentMethod);
             }
         }
@@ -85,7 +74,7 @@ class Document extends \Model
         // !HOOK: custom actions
         if (isset($GLOBALS['TL_HOOKS']['countByDocuments']) && is_array($GLOBALS['TL_HOOKS']['countByDocuments'])) {
             foreach ($GLOBALS['TL_HOOKS']['countByDocuments'] as $callback) {
-                $objCallback = \System::importStatic($callback[0]);
+                $objCallback = System::importStatic($callback[0]);
                 $objCallback->{$callback[1]}($strColumn, $varValue, $arrOptions, static::$strCurrentMethod);
             }
         }
@@ -113,7 +102,7 @@ class Document extends \Model
 		$t = static::$strTable;
 		$arrColumns = array("($t.id=? OR $t.alias=?) AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
 
-		if (!BE_USER_LOGGED_IN)
+		if (BE_USER_LOGGED_IN !== true)
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
@@ -124,6 +113,32 @@ class Document extends \Model
 		static::$strCurrentMethod = '';
 		return $varBuffer;
 	}
+
+
+    /**
+     * Find published document items by ID or alias
+     *
+     * @param mixed $varId      The numeric ID or alias name
+     * @param array $arrOptions An optional options array
+     *
+     * @return \Model|null The NewsModel or null if there are no document
+     */
+    public static function findPublishedByIdOrAlias($varId, array $arrOptions=array())
+    {
+        $t = static::$strTable;
+        $arrColumns = !preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
+
+        if (BE_USER_LOGGED_IN !== true)
+        {
+            $time = time();
+            $arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
+        }
+
+        static::$strCurrentMethod = 'findPublishedByIdOrAlias';
+        $varBuffer = static::findBy($arrColumns, $varId, $arrOptions);
+        static::$strCurrentMethod = '';
+        return $varBuffer;
+    }
 
 
 	/**
@@ -157,7 +172,7 @@ class Document extends \Model
 		}
 
 		// Never return unpublished elements in the back end, so they don't end up in the RSS feed
-		if (!BE_USER_LOGGED_IN || TL_MODE == 'BE')
+		if (BE_USER_LOGGED_IN !== true || TL_MODE === 'BE')
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
@@ -206,7 +221,7 @@ class Document extends \Model
 			$arrColumns[] = "$t.featured=''";
 		}
 
-		if (!BE_USER_LOGGED_IN)
+        if (BE_USER_LOGGED_IN !== true)
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
@@ -232,7 +247,7 @@ class Document extends \Model
 		$t = static::$strTable;
 		$arrColumns = array("$t.pid=?");
 
-		if (!BE_USER_LOGGED_IN)
+        if (BE_USER_LOGGED_IN !== true)
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
@@ -264,7 +279,12 @@ class Document extends \Model
 		$time = time();
 		$t = static::$strTable;
 
-		$arrColumns = array("$t.pid=? AND ($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1");
+		$arrColumns = array();
+
+        if (BE_USER_LOGGED_IN !== true)
+        {
+            $arrColumns[] = "$t.pid=? AND ($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
+        }
 
 		if (!isset($arrOptions['order']))
 		{
@@ -305,7 +325,7 @@ class Document extends \Model
 		$t = static::$strTable;
 		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
 
-		if (!BE_USER_LOGGED_IN)
+		if (BE_USER_LOGGED_IN !== true)
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
@@ -346,7 +366,7 @@ class Document extends \Model
 		$t = static::$strTable;
 		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
 
-		if (!BE_USER_LOGGED_IN)
+        if (BE_USER_LOGGED_IN !== true)
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";

@@ -2,24 +2,19 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
  
-namespace HBAgency\Backend\DocumentArchive;
+namespace Rhyme\Backend\DocumentArchive;
 
 
 /**
  * Class Callbacks
  *
  * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  HB Agency 2015
- * @author     Blair Winans <bwinans@hbagency.com>
- * @author     Adam Fisher <afisher@hbagency.com>
+ * @copyright  Rhyme 2021
+
+
  * @package    Document_Management
  */
 class Callbacks extends \Backend
@@ -86,11 +81,11 @@ class Callbacks extends \Backend
 													   ->limit(1)
 													   ->execute($this->User->id);
 
-							$arrNewp = deserialize($objUser->documentp);
+							$arrNewp = \deserialize($objUser->documentp);
 
 							if (is_array($arrNewp) && in_array('create', $arrNewp))
 							{
-								$arrNews = deserialize($objUser->document);
+								$arrNews = \deserialize($objUser->document);
 								$arrNews[] = \Input::get('id');
 
 								$this->Database->prepare("UPDATE tl_user SET document=? WHERE id=?")
@@ -105,11 +100,11 @@ class Callbacks extends \Backend
 													   ->limit(1)
 													   ->execute($this->User->groups[0]);
 
-							$arrNewp = deserialize($objGroup->documentp);
+							$arrNewp = \deserialize($objGroup->documentp);
 
 							if (is_array($arrNewp) && in_array('create', $arrNewp))
 							{
-								$arrNews = deserialize($objGroup->document);
+								$arrNews = \deserialize($objGroup->document);
 								$arrNews[] = \Input::get('id');
 
 								$this->Database->prepare("UPDATE tl_user_group SET document=? WHERE id=?")
