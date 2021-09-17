@@ -19,11 +19,5 @@ use Rhyme\ContaoDocumentsBundle\DependencyInjection\Extension;
  */
 final class RhymeContaoDocumentsBundle extends Bundle
 {
-    /**
-     * @return Extension
-     */
-    public function getContainerExtension()
-    {
-        return new Extension();
-    }
+
 }
