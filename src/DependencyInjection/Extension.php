@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Copyright (C) 2021 Rhyme Digital, LLC.
+ *
+ * @link		https://rhyme.digital
+ * @license		http://www.gnu.org/licenses/lgpl-3.0.html LGPL
+ */
+
+namespace Rhyme\ContaoDocumentsBundle\DependencyInjection;
+
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\Extension as SymfonyExtension;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+
+class Extension extends SymfonyExtension
+{
+    /**
+     * @param array $configs
+     * @param ContainerBuilder $container
+     * @throws \Exception
+     */
+    public function load(array $configs, ContainerBuilder $container)
+    {
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        //$loader->load('services.yml');
+    }
+}
