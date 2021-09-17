@@ -2,11 +2,6 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
@@ -16,7 +11,7 @@
  */
 $GLOBALS['TL_DCA']['tl_module']['palettes']['documentlist']    = '{title_legend},name,headline,type;{config_legend},document_archives,numberOfItems,document_featured,perPage,skipFirst;{template_legend:hide},document_metaFields,document_template,customTpl;{image_legend:hide},imgSize;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['documentreader']  = '{title_legend},name,headline,type;{config_legend},document_archives;{template_legend:hide},document_metaFields,document_template,customTpl;{image_legend:hide},imgSize;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
-$GLOBALS['TL_DCA']['tl_module']['palettes']['documentmenu']    = '{title_legend},name,headline,type;{config_legend},document_archives,document_showQuantity,document_format,document_startDay,document_order;{redirect_legend},jumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['documentfilter']  = '{title_legend},name,headline,type;{config_legend},document_filterfields,document_targetlistmodules;{redirect_legend},jumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 
 /**
@@ -27,7 +22,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['document_archives'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['document_archives'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
-	'options_callback'        => array('HBAgency\Backend\Module\Document\Callbacks', 'getDocumentArchives'),
+	'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getDocumentArchives'),
 	'eval'                    => array('multiple'=>true, 'mandatory'=>true),
 	'sql'                     => "blob NULL"
 );
@@ -60,7 +55,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['document_readerModule'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_module']['document_readerModule'],
 	'exclude'                 => true,
 	'inputType'               => 'select',
-	'options_callback'        => array('HBAgency\Backend\Module\Document\Callbacks', 'getReaderModules'),
+	'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getReaderModules'),
 	'reference'               => &$GLOBALS['TL_LANG']['tl_module'],
 	'eval'                    => array('includeBlankOption'=>true, 'tl_class'=>'w50'),
 	'sql'                     => "int(10) unsigned NOT NULL default '0'"
@@ -84,7 +79,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['document_template'] = array
 	'default'                 => 'document_latest',
 	'exclude'                 => true,
 	'inputType'               => 'select',
-	'options_callback'        => array('HBAgency\Backend\Module\Document\Callbacks', 'getDocumentTemplates'),
+	'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getDocumentTemplates'),
 	'eval'                    => array('tl_class'=>'w50'),
 	'sql'                     => "varchar(32) NOT NULL default ''"
 );
@@ -100,7 +95,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['document_format'] = array
 	'eval'                    => array('tl_class'=>'w50'),
 	'wizard' => array
 	(
-		array('HBAgency\Backend\Module\Document\Callbacks', 'hideStartDay')
+		array('Rhyme\Backend\Module\Document\Callbacks', 'hideStartDay')
 	),
 	'sql'                     => "varchar(32) NOT NULL default ''"
 );
@@ -135,5 +130,25 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['document_showQuantity'] = array
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
 	'sql'                     => "char(1) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['document_filterfields'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['document_filterfields'],
+    'exclude'                 => true,
+    'inputType'               => 'checkboxWizard',
+    'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getDocumentFilterFields'),
+    'eval'                    => array('multiple'=>true, 'mandatory'=>true),
+    'sql'                     => "blob NULL"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['document_targetlistmodules'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['document_targetlistmodules'],
+    'exclude'                 => true,
+    'inputType'               => 'checkboxWizard',
+    'options_callback'        => array('Rhyme\Backend\Module\Document\Callbacks', 'getDocumentListModules'),
+    'eval'                    => array('multiple'=>true, 'mandatory'=>true),
+    'sql'                     => "blob NULL"
 );
 

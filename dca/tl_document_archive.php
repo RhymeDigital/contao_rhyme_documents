@@ -2,11 +2,6 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
  
@@ -26,7 +21,7 @@ $GLOBALS['TL_DCA']['tl_document_archive'] = array
 		'enableVersioning'            => true,
 		'onload_callback' => array
 		(
-			array('HBAgency\Backend\DocumentArchive\Callbacks', 'checkPermission'),
+			array('Rhyme\Backend\DocumentArchive\Callbacks', 'checkPermission'),
 		),
 		'sql' => array
 		(
@@ -75,14 +70,14 @@ $GLOBALS['TL_DCA']['tl_document_archive'] = array
 				'label'               => &$GLOBALS['TL_LANG']['tl_document_archive']['editheader'],
 				'href'                => 'act=edit',
 				'icon'                => 'header.gif',
-				'button_callback'     => array('HBAgency\Backend\DocumentArchive\Callbacks', 'editHeader')
+				'button_callback'     => array('Rhyme\Backend\DocumentArchive\Callbacks', 'editHeader')
 			),
 			'copy' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_document_archive']['copy'],
 				'href'                => 'act=copy',
 				'icon'                => 'copy.gif',
-				'button_callback'     => array('HBAgency\Backend\DocumentArchive\Callbacks', 'copyArchive')
+				'button_callback'     => array('Rhyme\Backend\DocumentArchive\Callbacks', 'copyArchive')
 			),
 			'delete' => array
 			(
@@ -90,7 +85,7 @@ $GLOBALS['TL_DCA']['tl_document_archive'] = array
 				'href'                => 'act=delete',
 				'icon'                => 'delete.gif',
 				'attributes'          => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
-				'button_callback'     => array('HBAgency\Backend\DocumentArchive\Callbacks', 'deleteArchive')
+				'button_callback'     => array('Rhyme\Backend\DocumentArchive\Callbacks', 'deleteArchive')
 			),
 			'show' => array
 			(

@@ -2,10 +2,10 @@
 /**
  * Document management for Contao Open Source CMS
  *
- * Copyright (C) 2014-2015 HB Agency
+ * Copyright (C) 2014-2021 Rhyme
  *
  * @package    Document_Management
- * @link       http://www.hbagency.com
+ * @link       http://rhyme.digital
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
@@ -13,9 +13,9 @@
  * Class DocManRequest
  *
  * Provide methods to handle Ajax requests.
- * @copyright  HB Agency 2015
- * @author     Blair Winans <bwinans@hbagency.com>
- * @author     Adam Fisher <afisher@hbagency.com>
+ * @copyright  Rhyme 2021
+
+
  */
 var DocManRequest =
 {

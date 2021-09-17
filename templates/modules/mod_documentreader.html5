@@ -2,7 +2,7 @@
 
 <?php $this->block('content'); ?>
 
-  <?php echo $this->document; ?>
+  <?php echo $this->document_parsed; ?>
 
   <!-- indexer::stop -->
   <p class="back"><a href="<?php echo $this->referer; ?>" title="<?php echo $this->back; ?>"><?php echo $this->back; ?></a></p>

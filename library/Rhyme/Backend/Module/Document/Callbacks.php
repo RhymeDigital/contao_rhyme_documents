@@ -2,29 +2,22 @@
 
 /**
  * Document management for Contao Open Source CMS
- *
- * Copyright (C) 2014-2015 HB Agency
- *
- * @package    Document_Management
- * @link       http://www.hbagency.com
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  */
 
-/**
- * Run in a custom namespace, so the class can be replaced
- */
-namespace HBAgency\Backend\Module\Document;
+
+namespace Rhyme\Backend\Module\Document;
+
+use Contao\Backend;
+use Contao\Controller;
+use Contao\ModuleModel;
+use Rhyme\Model\Document as DocumentModel;
 
 /**
  * Class Callbacks
- *
- * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  HB Agency 2015
- * @author     Blair Winans <bwinans@hbagency.com>
- * @author     Adam Fisher <afisher@hbagency.com>
- * @package    Document_Management
+ * @package Rhyme\Backend\Module\Document
  */
-class Callbacks extends \Backend
+class Callbacks extends Backend
 {
 
 	/**
@@ -34,7 +27,61 @@ class Callbacks extends \Backend
 	{
 		parent::__construct();
 		$this->import('BackendUser', 'User');
+
+        Controller::loadLanguageFile(DocumentModel::getTable());
+        Controller::loadDataContainer(DocumentModel::getTable());
 	}
+
+
+    /**
+     * Get filterable document fields
+     *
+     * @access		public
+     * @return		array
+     */
+    public function getDocumentFilterFields()
+    {
+        $arrReturn = array('body'=>'Body');
+
+        foreach ($GLOBALS['TL_DCA'][DocumentModel::getTable()]['fields'] as $key=>$data)
+        {
+            if ($data['attributes'] && $data['attributes']['fe_filter'])
+            {
+                $arrReturn[$key] = $data['label'][0];
+            }
+        }
+
+        return $arrReturn;
+    }
+
+
+    /**
+     * Get document lister modules
+     *
+     * @access		public
+     * @return		array
+     */
+    public function getDocumentListModules()
+    {
+        $arrReturn = array();
+
+        $objModules = ModuleModel::findAll();
+
+        if ($objModules === null)
+        {
+            return $arrReturn;
+        }
+
+        while ($objModules->next())
+        {
+            if (stripos($objModules->current()->type, 'document') !== false)
+            {
+                $arrReturn[strval($objModules->current()->id)] = $objModules->current()->name;
+            }
+        }
+
+        return $arrReturn;
+    }
 
 
 	/**
