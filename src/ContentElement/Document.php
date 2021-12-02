@@ -7,6 +7,8 @@
 
 namespace Rhyme\ContaoDocumentsBundle\ContentElement;
 
+use Contao\ContentElement;
+use Contao\BackendTemplate;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 use Rhyme\ContaoDocumentsBundle\Helper\DocumentHelper;
 
@@ -16,7 +18,7 @@ use Rhyme\ContaoDocumentsBundle\Helper\DocumentHelper;
  *
  * @author Leo Feyer <https://github.com/leofeyer>
  */
-class Document extends \ContentElement
+class Document extends ContentElement
 {
 
     /**
@@ -36,7 +38,7 @@ class Document extends \ContentElement
 
 		if (TL_MODE === 'BE')
 		{
-			$objTemplate = new \BackendTemplate('be_wildcard');
+			$objTemplate = new BackendTemplate('be_wildcard');
 
             $objTemplate->wildcard = '### ' . utf8_strtoupper($GLOBALS['TL_LANG']['CTE']['document_single']) . ($this->objDocument ? ' ('.$this->objDocument->headline.')' : '') . ' ###';
 			$objTemplate->id = $this->id;

@@ -59,7 +59,7 @@ class DocumentHelper extends Controller
         $objTemplate->setData($objDocument->row());
 
         $objTemplate->class = (($objDocument->cssClass != '') ? ' ' . $objDocument->cssClass : '') . $strClass;
-        $objTemplate->documentHeadline = $objDocument->headline;
+        $objTemplate->documentHeadline = $objDocument->label__override ?: $objDocument->headline;
         $objTemplate->subHeadline = $objDocument->subheadline;
         $objTemplate->hasSubHeadline = $objDocument->subheadline ? true : false;
         $objTemplate->link = static::generateDocumentUrl($objDocument);

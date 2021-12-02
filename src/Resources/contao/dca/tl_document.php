@@ -103,7 +103,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_document']['feature'],
 				'icon'                => 'featured.gif',
-				'attributes'          => 'onclick="Backend.getScrollOffset();return DocManRequest.toggleFeatured(this,%s)"',
+				'attributes'          => 'onclick="Backend.getScrollOffset();return DocMan.toggleFeatured(this,%s)"',
 				'button_callback'     => array('\Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'iconFeatured')
 			),
 			'show' => array
