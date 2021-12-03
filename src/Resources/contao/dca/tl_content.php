@@ -42,5 +42,5 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['document_template'] = array
 	'inputType'               => 'select',
 	'options_callback'        => array('Rhyme\ContaoDocumentsBundle\Backend\Module\Document\Callbacks', 'getDocumentTemplates'),
 	'eval'                    => array('tl_class'=>'w50', 'chosen'=>true),
-	'sql'                     => "varchar(32) NOT NULL default ''"
+	'sql'                     => "TINYTEXT"
 );
