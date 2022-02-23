@@ -9,7 +9,10 @@ if(TL_MODE==='BE') {
     array_insert($GLOBALS['TL_JAVASCRIPT'], 99, array    (
         'bundles/rhymecontaodocuments/assets/js/docman.js'
     ));
+
+    $GLOBALS['TL_CSS'][] = 'bundles/rhymecontaodocuments/assets/css/be_styles.css';
 }
+
 
 /**
  * Back end modules
