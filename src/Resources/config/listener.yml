@@ -1,0 +1,19 @@
+##
+# Listener priorities
+#
+#
+# The priorities of the following listeners must be lower than the one of the
+# Symfony route listener (defaults to 32).
+#
+# - 16: BootContaoFrameworkListener
+#
+# Do not change the priorities unless you know what you are doing!
+##
+services:
+  rhyme_document.listener.insert_tags:
+    class: Rhyme\ContaoDocumentsBundle\EventListener\InsertTagsListener
+    arguments:
+      - "@contao.framework"
+    public: true
+    tags:
+      - { name: contao.hook, hook: replaceInsertTags }

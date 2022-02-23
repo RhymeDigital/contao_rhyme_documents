@@ -28,3 +28,9 @@ $GLOBALS['TL_LANG']['ERR']['requiredDocumentField'] = 'Please select either a ex
 $GLOBALS['TL_LANG']['CTE']['document']          = 'Document Manager';
 $GLOBALS['TL_LANG']['CTE']['document_single']   = ['Single Document', 'Output a single document.'];
 $GLOBALS['TL_LANG']['CTE']['document_list']     = ['Document List', 'Output a list of documents.'];
+
+
+/**
+ * Pickers
+ */
+$GLOBALS['TL_LANG']['MSC']['rhyme_documentPicker']  = 'Documents';

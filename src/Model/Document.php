@@ -141,6 +141,26 @@ class Document extends Model
     }
 
 
+    /**
+     * Find published document items by ID or alias
+     *
+     * @param mixed $varId      The numeric ID or alias name
+     * @param array $arrOptions An optional options array
+     *
+     * @return \Model|null The NewsModel or null if there are no document
+     */
+    public static function findByIdOrAlias($varId, array $arrOptions=array())
+    {
+        $t = static::$strTable;
+        $arrColumns = !preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
+
+        static::$strCurrentMethod = 'findByIdOrAlias';
+        $varBuffer = static::findBy($arrColumns, $varId, $arrOptions);
+        static::$strCurrentMethod = '';
+        return $varBuffer;
+    }
+
+
 	/**
 	 * Find published document items by their parent ID
 	 *

@@ -1,0 +1,15 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  rhyme_documents.picker.event_provider:
+    class: Rhyme\ContaoDocumentsBundle\Picker\DocumentPickerProvider
+    arguments:
+      - "@knp_menu.factory"
+      - "@router"
+      - "@translator"
+    calls:
+      - [ setTokenStorage, [ "@security.token_storage" ] ]
+    tags:
+      - { name: contao.picker_provider, priority: 96 }
