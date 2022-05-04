@@ -19,6 +19,14 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 class Extension extends SymfonyExtension
 {
     /**
+     * {@inheritdoc}
+     */
+    public function getAlias()
+    {
+        return 'rhyme_documents';
+    }
+
+    /**
      * @param array $configs
      * @param ContainerBuilder $container
      * @throws \Exception
