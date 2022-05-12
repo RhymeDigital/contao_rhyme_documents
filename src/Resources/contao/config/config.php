@@ -62,9 +62,12 @@ $GLOBALS['TL_MODELS']['tl_document_archive']    = 'Rhyme\ContaoDocumentsBundle\M
 
 
 /**
- * Register hook to add document items to the indexer
+ * Hooks
  */
-$GLOBALS['TL_HOOKS']['executePostActions'][] = array('Rhyme\ContaoDocumentsBundle\Hooks\ExecutePostActions\ToggleFeaturedDoc', 'run');
+$GLOBALS['TL_HOOKS']['executePostActions'][]        = array('Rhyme\ContaoDocumentsBundle\Hooks\ExecutePostActions\ToggleFeaturedDoc', 'run');
+$GLOBALS['TL_HOOKS']['findDocuments'][]             = array('Rhyme\ContaoDocumentsBundle\Hooks\FindDocuments\ApplyDocumentFilters', 'run');
+$GLOBALS['TL_HOOKS']['countByDocuments'][]          = array('Rhyme\ContaoDocumentsBundle\Hooks\CountByDocuments\ApplyDocumentFilters', 'run');
+
 
 /**
  * Add permissions

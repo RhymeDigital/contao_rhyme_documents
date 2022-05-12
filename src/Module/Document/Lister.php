@@ -90,7 +90,7 @@ class Lister extends Document_Module
 		}
 
 		$this->Template->articles = array();
-		$this->Template->empty = $GLOBALS['TL_LANG']['MSC']['emptyList'];
+		$this->Template->empty = $GLOBALS['TL_LANG']['MSC']['emptyDocumentsList'];
 
 		// Get the total number of items
 		$intTotal = DocumentModel::countPublishedByPids($this->document_archives, $blnFeatured);

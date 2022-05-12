@@ -16,6 +16,7 @@ $GLOBALS['TL_LANG']['MSC']['dw_copy']                   = 'Duplicate the row';
 $GLOBALS['TL_LANG']['MSC']['dw_up']                     = 'Move the row one position up';
 $GLOBALS['TL_LANG']['MSC']['dw_down']                   = 'Move the row one position down';
 $GLOBALS['TL_LANG']['MSC']['dw_delete']                 = 'Delete the row';
+$GLOBALS['TL_LANG']['MSC']['emptyDocumentsList']        = 'Currently there are no documents.';
 
 /**
  * Errors
