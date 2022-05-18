@@ -9,6 +9,7 @@
 
 namespace Rhyme\ContaoDocumentsBundle\Hooks\FindDocuments;
 
+use Contao\StringUtil;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 
 
@@ -60,10 +61,28 @@ class ApplyDocumentFilters extends \Frontend
 
                 if ($key == 'body')
                 {
-                    $arrOptions['column'][] = "($t.headline REGEXP ? OR $t.teaser REGEXP ? OR $t.subheadline REGEXP ?)";
-                    $arrOptions['value'][] = $val;
-                    $arrOptions['value'][] = $val;
-                    $arrOptions['value'][] = $val;
+                    $where = [];
+                    $arrValues = [];
+                    $arrFields = ['headline', 'teaser', 'subheadline'];
+                    $arrWords = StringUtil::trimsplit(' ', $val);
+
+                    foreach ($arrFields as $field)
+                    {
+                        foreach ($arrWords as $word)
+                        {
+                            $where[] = "$t.$field REGEXP ?";
+                            $arrValues[] = $word;
+                        }
+                    }
+
+                    if (count($where))
+                    {
+                        $arrOptions['column'][] = "(".\implode(" OR ", $where).")";
+
+                        foreach ($arrValues as $value) {
+                            $arrOptions['value'][] = $value;
+                        }
+                    }
                     continue;
                 }
 
