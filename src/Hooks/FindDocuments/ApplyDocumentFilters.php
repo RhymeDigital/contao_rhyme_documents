@@ -68,8 +68,15 @@ class ApplyDocumentFilters extends \Frontend
 
                     foreach ($arrFields as $field)
                     {
-                        foreach ($arrWords as $word)
+                        foreach ($arrWords as $wordKey=>$word)
                         {
+                            if (empty($word) ||
+                                \in_array(\strtolower($word), \array_map('strtolower', $GLOBALS['DOCUMENTS_KEYWORD_STOP_WORDS']))
+                            ) {
+                                unset($arrWords[$wordKey]);
+                                continue;
+                            }
+
                             $where[] = "$t.$field REGEXP ?";
                             $arrValues[] = $word;
                         }
