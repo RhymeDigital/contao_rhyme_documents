@@ -60,15 +60,12 @@ class DocumentList extends ContentElement
 	    $arrDocuments = [];
 
 	    foreach ($this->arrDocuments as $doc) {
-            try {
-                // Make sure the document is published
-                $objPublished = DocumentModel::findPublishedByIdOrAlias($doc['doc']);
-                if ($objPublished !== null) {
-                    $objPublished->current()->label__override = $doc['label'];
-                    $arrDocuments[$objPublished->current()->id] = DocumentHelper::parseDocument($objPublished->current(), '', 1, $this, $this->document_template);
-                }
+            // Make sure the document is published
+            $objPublished = DocumentModel::findPublishedByIdOrAlias($doc['doc']);
+            if ($objPublished !== null) {
+                $objPublished->current()->label__override = $doc['label'];
+                $arrDocuments[$objPublished->current()->id] = DocumentHelper::parseDocument($objPublished->current(), '', 1, $this, $this->document_template);
             }
-            catch (\Exception $e) {}
         }
 
         $this->Template->articles = $arrDocuments;
