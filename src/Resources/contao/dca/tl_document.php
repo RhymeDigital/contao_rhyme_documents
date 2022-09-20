@@ -167,7 +167,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 			(
 				array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'generateAlias')
 			),
-			'sql'                     => "varchar(128) COLLATE utf8_bin NOT NULL default ''"
+			'sql'                     => "varchar(128) BINARY NOT NULL default ''"
 		),
 		'author' => array
 		(
