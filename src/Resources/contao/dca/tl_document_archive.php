@@ -84,7 +84,7 @@ $GLOBALS['TL_DCA']['tl_document_archive'] = array
 				'label'               => &$GLOBALS['TL_LANG']['tl_document_archive']['delete'],
 				'href'                => 'act=delete',
 				'icon'                => 'delete.gif',
-				'attributes'          => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
+				'attributes'          => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null) . '\'))return false;Backend.getScrollOffset()"',
 				'button_callback'     => array('Rhyme\ContaoDocumentsBundle\Backend\DocumentArchive\Callbacks', 'deleteArchive')
 			),
 			'show' => array
