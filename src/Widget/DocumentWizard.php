@@ -167,6 +167,16 @@ class DocumentWizard extends Widget
 
 		return $return.'
   </tbody>
-  </table>';
+  </table>
+  <script>
+  window.addEvent(\'domready\', function(){
+    // Make this sortable 
+    new Sortables($$(\'#ctrl_'.$this->strId.' tbody\')[0], {
+        constrain: true,
+        opacity: 0.6,
+        handle: \'.drag-handle\'
+    });
+  });
+  </script>';
 	}
 }
