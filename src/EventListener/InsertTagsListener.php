@@ -38,11 +38,11 @@ class InsertTagsListener
         $elements = StringUtil::trimsplit('::', $tag);
         $key = \strtolower($elements[0]);
 
-        static $supportedVideoTags = [
+        static $supportedTags = [
             'rhyme_document_url',
         ];
 
-        if (\in_array($key, $supportedVideoTags, true)) {
+        if (\in_array($key, $supportedTags, true)) {
             return $this->replaceDocumentInsertTag($key, $elements[1], $flags);
         }
 
@@ -63,7 +63,7 @@ class InsertTagsListener
 
         switch ($insertTag) {
             case 'rhyme_document_url':
-                return DocumentHelper::generateDocumentUrl($model);
+                return DocumentHelper::generateDownloadUrl($model);
         }
 
         return '';
