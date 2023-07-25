@@ -1,6 +1,6 @@
 
-<div class="layout_nameonly arc_<?php echo $this->archive->id; ?> block <?php echo $this->class; ?>">
+<div class="layout_nameonly arc_<?= $this->archive->id; ?> block <?= $this->class; ?>">
 
-  <a href="<?php echo $this->download; ?>" title=""><?php echo $this->documentHeadline; ?></a>
+  <a href="<?= $this->download; ?>" title="<?= \Contao\StringUtil::specialchars($this->documentHeadline) ?>"<?= $this->target ?><?= $this->rel ?>><?= $this->documentHeadline; ?></a>
 
 </div>
