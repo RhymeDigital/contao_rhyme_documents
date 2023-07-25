@@ -66,6 +66,7 @@ class DocumentHelper extends Controller
         $objTemplate->download = static::generateDownloadUrl($objDocument);
         $objTemplate->archive = $objDocument->getRelated('pid');
         $objTemplate->count = $intCount;
+        $objTemplate->target = '';
 
         // Clean the RTE output
         if ($objDocument->teaser != '')
@@ -124,6 +125,31 @@ class DocumentHelper extends Controller
                 $objTemplate->fileType = str_replace('.', ', ', $objModel->extension);
                 $objTemplate->class .= (strlen($objTemplate->class) > 0 ? ' ' : '') . strtolower($objTemplate->fileType);
             }
+        }
+
+        // Override the link target
+        if ($objDocument->target)
+        {
+            $objTemplate->target = ' target="_blank"';
+        }
+
+        $arrRel = array();
+
+        if (strncmp($objDocument->robots, 'noindex,nofollow', 16) === 0)
+        {
+            $arrRel[] = 'nofollow';
+        }
+
+        if ($objDocument->target)
+        {
+            $arrRel[] = 'noreferrer';
+            $arrRel[] = 'noopener';
+        }
+
+        // Override the rel attribute
+        if (!empty($arrRel))
+        {
+            $objTemplate->rel = ' rel="' . implode(' ', $arrRel) . '"';
         }
 
         if (isset($GLOBALS['TL_HOOKS']['parseDocuments']) && is_array($GLOBALS['TL_HOOKS']['parseDocuments']))
