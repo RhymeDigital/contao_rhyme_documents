@@ -120,8 +120,7 @@ class DocumentHelper extends Controller
                     }
                 }
 
-                $arrDocument['singleSRC'] = $objModel->path;
-
+                $objTemplate->filePath = $arrDocument['singleSRC'] = $objModel->path;
                 $objTemplate->fileType = str_replace('.', ', ', $objModel->extension);
                 $objTemplate->class .= (strlen($objTemplate->class) > 0 ? ' ' : '') . strtolower($objTemplate->fileType);
             }
