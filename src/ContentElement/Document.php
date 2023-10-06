@@ -9,6 +9,7 @@ namespace Rhyme\ContaoDocumentsBundle\ContentElement;
 
 use Contao\ContentElement;
 use Contao\BackendTemplate;
+use Contao\System;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 use Rhyme\ContaoDocumentsBundle\Helper\DocumentHelper;
 
@@ -36,8 +37,9 @@ class Document extends ContentElement
 	{
         $this->objDocument = $this->document ? DocumentModel::findByPk($this->document) : null;
 
-		if (TL_MODE === 'BE')
-		{
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+        if ($request && System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest($request)) {
+
 			$objTemplate = new BackendTemplate('be_wildcard');
 
             $objTemplate->wildcard = '### ' . utf8_strtoupper($GLOBALS['TL_LANG']['CTE']['document_single'][0]) . ($this->objDocument ? ' ('.$this->objDocument->headline.')' : '') . ' ###';
@@ -53,10 +55,12 @@ class Document extends ContentElement
         }
 
 		// Make sure this element is published
-		if (TL_MODE === 'FE' && BE_USER_LOGGED_IN !== true && ($this->invisible || ($this->start != '' && $this->start > time()) || ($this->stop != '' && $this->stop < time())))
-		{
-			return '';
-		}
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+        if ($request && System::getContainer()->get('contao.routing.scope_matcher')->isFrontendRequest($request) && !System::getContainer()->get('contao.security.token_checker')->isPreviewMode()) {
+            if (($this->invisible || ($this->start != '' && $this->start > time()) || ($this->stop != '' && $this->stop < time()))) {
+                return '';
+            }
+        }
 
 		return DocumentHelper::parseDocument($this->objDocument, '', 1, $this);
 	}

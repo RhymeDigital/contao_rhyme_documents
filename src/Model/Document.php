@@ -192,7 +192,8 @@ class Document extends Model
 		}
 
 		// Never return unpublished elements in the back end, so they don't end up in the RSS feed
-		if (BE_USER_LOGGED_IN !== true || TL_MODE === 'BE')
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+        if ($request && System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest($request) )
 		{
 			$time = time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";

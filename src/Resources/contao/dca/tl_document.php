@@ -10,6 +10,8 @@
  */
 $this->loadLanguageFile('tl_content');
 
+use Contao\BackendUser;
+
 
 /**
  * Table tl_document
@@ -172,7 +174,7 @@ $GLOBALS['TL_DCA']['tl_document'] = array
 		'author' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_document']['author'],
-			'default'                 => \BackendUser::getInstance()->id,
+			'default'                 => BackendUser::getInstance()->id,
 			'exclude'                 => true,
 			'filter'                  => true,
 			'sorting'                 => true,

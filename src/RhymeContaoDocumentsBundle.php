@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Rhyme\ContaoDocumentsBundle;
 
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Rhyme\ContaoDocumentsBundle\DependencyInjection\Extension;
 
@@ -22,7 +23,7 @@ final class RhymeContaoDocumentsBundle extends Bundle
     /**
      * {@inheritdoc}
      */
-    public function getContainerExtension()
+    public function getContainerExtension(): ?ExtensionInterface
     {
         return new Extension();
     }
