@@ -2,13 +2,18 @@
 
 namespace {
 
+    use Contao\ArrayUtil;
+    use Contao\System;
+
     /**
      * Document management for Contao Open Source CMS
      * @license    http://opensource.org/licenses/lgpl-3.0.html
      */
 
-    if(TL_MODE==='BE') {
-        array_insert($GLOBALS['TL_JAVASCRIPT'], 99, array    (
+    $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+    if ($request && System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest($request)) {
+
+        ArrayUtil::arrayInsert($GLOBALS['TL_JAVASCRIPT'], 99, array    (
             'bundles/rhymecontaodocuments/assets/js/docman.js'
         ));
 
@@ -19,7 +24,7 @@ namespace {
     /**
      * Back end modules
      */
-    \array_insert($GLOBALS['BE_MOD']['content'], 10, array
+    ArrayUtil::arrayInsert($GLOBALS['BE_MOD']['content'], 10, array
     (
         'document' => array
         (
@@ -32,7 +37,7 @@ namespace {
     /**
      * Front end modules
      */
-    \array_insert($GLOBALS['FE_MOD'], 2, array
+    ArrayUtil::arrayInsert($GLOBALS['FE_MOD'], 2, array
     (
         'document' => array
         (

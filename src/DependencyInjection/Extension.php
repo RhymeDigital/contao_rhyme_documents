@@ -21,7 +21,7 @@ class Extension extends SymfonyExtension
     /**
      * {@inheritdoc}
      */
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'rhyme_documents';
     }

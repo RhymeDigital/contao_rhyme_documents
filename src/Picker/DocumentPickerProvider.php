@@ -46,7 +46,7 @@ class DocumentPickerProvider extends AbstractPickerProvider implements DcaPicker
     /**
      * {@inheritdoc}
      */
-    public function getDcaTable(): string
+    public function getDcaTable(PickerConfig|null $config = null): string
     {
         return 'tl_document';
     }
