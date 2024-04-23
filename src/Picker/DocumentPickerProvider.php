@@ -46,7 +46,7 @@ class DocumentPickerProvider extends AbstractPickerProvider implements DcaPicker
     /**
      * {@inheritdoc}
      */
-    public function getDcaTable(PickerConfig|null $config = null): string
+    public function getDcaTable(?PickerConfig $config = null): string
     {
         return 'tl_document';
     }
@@ -100,7 +100,7 @@ class DocumentPickerProvider extends AbstractPickerProvider implements DcaPicker
     /**
      * {@inheritdoc}
      */
-    protected function getRouteParameters(PickerConfig $config = null): array
+    protected function getRouteParameters(?PickerConfig $config = null): array
     {
         $params = ['do' => 'document'];
 
