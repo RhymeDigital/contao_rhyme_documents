@@ -7,6 +7,7 @@
  
 namespace Rhyme\ContaoDocumentsBundle\Backend\Document;
 
+use Contao\Backend;
 
 /**
  * Class Callbacks
@@ -17,7 +18,7 @@ namespace Rhyme\ContaoDocumentsBundle\Backend\Document;
 
  * @package    Document_Management
  */
-class Callbacks extends \Backend
+class Callbacks extends Backend
 {
 
 	/**
