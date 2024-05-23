@@ -7,6 +7,10 @@
  
 namespace Rhyme\ContaoDocumentsBundle\Hooks\ExecutePostActions;
 
+use Contao\Input;
+use Contao\System;
+use Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks;
+
 /**
  * Class ToggleFeaturedDoc
  *
@@ -16,15 +20,15 @@ namespace Rhyme\ContaoDocumentsBundle\Hooks\ExecutePostActions;
 
  * @package    Document_Management
  */
-class ToggleFeaturedDoc extends \Backend
+class ToggleFeaturedDoc
 {
     
     public function run($strAction, $dc)
     {
         if($strAction=='toggleFeaturedDoc')
         {
-            $this->import('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'Callbacks');
-            $this->Callbacks->toggleFeatured(\Input::post('id'), ((\Input::post('state') == 1) ? true : false));
+			$callbacks = System::importStatic(Callbacks::class);
+			$callbacks->toggleFeatured(Input::post('id'), ((Input::post('state') == 1) ? true : false));
         }
     }
     
