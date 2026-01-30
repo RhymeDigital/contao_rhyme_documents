@@ -9,7 +9,13 @@
 
 namespace Rhyme\ContaoDocumentsBundle\Hooks\FindDocuments;
 
+use Contao\Controller;
+use Contao\Database;
+use Contao\Frontend;
+use Contao\Input;
+use Contao\ModuleModel;
 use Contao\StringUtil;
+use Contao\System;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 
 
@@ -17,27 +23,20 @@ use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
  * Class ApplyDocumentFilters
  * @package Rhyme\ContaoDocumentsBundle\Hooks\FindDocuments
  */
-class ApplyDocumentFilters extends \Frontend
+class ApplyDocumentFilters extends Frontend
 {
 
     /**
      * Store the IDs of items that have been obtained by searching for their body text
      * @var array
      */
-    protected static $arrCachedBodyIds = array();
-
+    protected static array $arrCachedBodyIds = array();
 
     /**
      * Apply filter values to the custom document model
-     *
-     * Class:		DocumentModel
-     * Method:		find
-     * Hook:		$GLOBALS['TL_HOOKS']['findDocuments']
-     *
-     * @access		public
-     * @param		array
-     * @param		string
-     * @return		void
+     * @param $arrOptions
+     * @param $strCurrentMethod
+     * @return void
      */
     public static function run(&$arrOptions, $strCurrentMethod)
     {
@@ -52,14 +51,14 @@ class ApplyDocumentFilters extends \Frontend
         {
             $t = DocumentModel::getTable();
 
-            \System::loadLanguageFile($t);
-            \Controller::loadDataContainer($t);
+            System::loadLanguageFile($t);
+            Controller::loadDataContainer($t);
 
             foreach ($arrFilters as $key=>$val)
             {
-                $strFilterType = $GLOBALS['TL_DCA'][$t]['fields'][$key]['attributes']['fe_filter_type'] ?: 'rgxp';
+                $strFilterType = $GLOBALS['TL_DCA'][$t]['fields'][$key]['attributes']['fe_filter_type'] ?? 'rgxp';
 
-                if ($key == 'body')
+                if ($key === 'body')
                 {
                     $where = [];
                     $arrValues = [];
@@ -82,7 +81,7 @@ class ApplyDocumentFilters extends \Frontend
                         }
                     }
 
-                    if (count($where))
+                    if (\count($where))
                     {
                         $arrOptions['column'][] = "(".\implode(" OR ", $where).")";
 
@@ -93,12 +92,12 @@ class ApplyDocumentFilters extends \Frontend
                     continue;
                 }
 
-                if (is_array($val) && !empty($val))
+                if (\is_array($val) && !empty($val))
                 {
                     $strWhere = "(";
                     foreach ($val as $i=>$opt)
                     {
-                        if ($i != 0)
+                        if ($i !== 0)
                         {
                             $strWhere .= " OR ";
                         }
@@ -123,6 +122,14 @@ class ApplyDocumentFilters extends \Frontend
         }
     }
 
+    /**
+     * @param $key
+     * @param $val
+     * @param $strWhere
+     * @param $strFilterType
+     * @param $arrOptions
+     * @return array
+     */
     protected static function getWhere($key, $val, $strWhere, $strFilterType, $arrOptions)
     {
         $t = DocumentModel::getTable();
@@ -149,9 +156,9 @@ class ApplyDocumentFilters extends \Frontend
 
             default:
                 // !HOOK: custom...
-                if (isset($GLOBALS['TL_HOOKS']['documentFiltersGetWhere']) && is_array($GLOBALS['TL_HOOKS']['documentFiltersGetWhere'])) {
+                if (isset($GLOBALS['TL_HOOKS']['documentFiltersGetWhere']) && \is_array($GLOBALS['TL_HOOKS']['documentFiltersGetWhere'])) {
                     foreach ($GLOBALS['TL_HOOKS']['documentFiltersGetWhere'] as $callback) {
-                        $objCallback = \System::importStatic($callback[0]);
+                        $objCallback = System::importStatic($callback[0]);
                         list($key, $val, $strWhere, $strFilterType, $arrOptions) = $objCallback->{$callback[1]}($key, $val, $strWhere, $strFilterType, $arrOptions);
                     }
                 }
@@ -161,21 +168,23 @@ class ApplyDocumentFilters extends \Frontend
         return array($key, $val, $strWhere, $strFilterType, $arrOptions);
     }
 
-
+    /**
+     * @return array
+     */
     protected static function getFilters()
     {
         $arrFilters = array();
-        $arrGetKeys = array_keys((array)$_GET);
+        $arrGetKeys = \array_keys((array)$_GET);
 
         foreach ((array)$arrGetKeys as $key)
         {
-            if ((\Database::getInstance()->fieldExists($key, DocumentModel::getTable()) || $key == 'body') && \Input::get($key))
+            if ((Database::getInstance()->fieldExists($key, DocumentModel::getTable()) || $key === 'body') && Input::get($key))
             {
-                if (is_array(\Input::get($key)))
+                if (\is_array(Input::get($key)))
                 {
                     $arrValues = array();
 
-                    foreach (\Input::get($key) as $val)
+                    foreach (Input::get($key) as $val)
                     {
                         if ($val)
                         {
@@ -190,7 +199,7 @@ class ApplyDocumentFilters extends \Frontend
                 }
                 else
                 {
-                    $arrFilters[$key] = \Input::get($key);
+                    $arrFilters[$key] = Input::get($key);
                 }
             }
         }
@@ -198,23 +207,25 @@ class ApplyDocumentFilters extends \Frontend
         return $arrFilters;
     }
 
-
+    /**
+     * @return bool
+     */
     protected static function validateFilterAndLister()
     {
+        $lastModuleId = $GLOBALS['DOCUMENT']['LAST_GENERATED_MODULE'] ?? null;
+
         // See if we have a "last generated module" ID, lists in the GET params, and that the last generated module is one of the lists
-        if (!isset($GLOBALS['DOCUMENT']['LAST_GENERATED_MODULE']) ||
-            !$GLOBALS['DOCUMENT']['LAST_GENERATED_MODULE'] ||
-            !\Input::get('lists') ||
-            !in_array($GLOBALS['DOCUMENT']['LAST_GENERATED_MODULE'], trimsplit(',', \Input::get('lists')))
-        )
-        {
+        if (!$lastModuleId ||
+            !Input::get('lists') ||
+            !\in_array($lastModuleId, StringUtil::trimsplit(',', Input::get('lists')))
+        ) {
             return false;
         }
 
-        $objRow = \ModuleModel::findByPk($GLOBALS['DOCUMENT']['LAST_GENERATED_MODULE']);
+        $objRow = ModuleModel::findByPk($lastModuleId);
 
         // See if we have a row, and check the visibility (see #6311)
-        if ($objRow === null || !\Controller::isVisibleElement($objRow))
+        if ($objRow === null || !Controller::isVisibleElement($objRow))
         {
             return false;
         }

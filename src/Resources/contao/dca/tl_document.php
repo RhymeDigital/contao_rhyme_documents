@@ -14,7 +14,7 @@ namespace {
 
     use Contao\BackendUser;
     use Contao\DC_Table;
-
+    use Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks;
 
     /**
      * Table tl_document
@@ -31,11 +31,11 @@ namespace {
             'enableVersioning'            => true,
             'onload_callback' => array
             (
-                array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'checkPermission'),
+                array(Callbacks::class, 'checkPermission'),
             ),
             'onsubmit_callback' => array
             (
-                array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'adjustTime'),
+                array(Callbacks::class, 'adjustTime'),
             ),
             'sql' => array
             (
@@ -57,7 +57,7 @@ namespace {
                 'fields'                  => array('date DESC'),
                 'headerFields'            => array('headline', 'jumpTo', 'tstamp', 'protected'),
                 'panelLayout'             => 'filter;sort,search,limit',
-                'child_record_callback'   => array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'listDocuments'),
+                'child_record_callback'   => array(Callbacks::class, 'listDocuments'),
                 'child_record_class'      => 'no_padding'
             ),
             'global_operations' => array
@@ -72,51 +72,25 @@ namespace {
             ),
             'operations' => array
             (
-                'edit' => array
-                (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['edit'],
-                    'href'                => 'act=edit',
-                    'icon'                => 'edit.gif'
-                ),
-                'copy' => array
-                (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['copy'],
-                    'href'                => 'act=paste&amp;mode=copy',
-                    'icon'                => 'copy.gif'
-                ),
-                'cut' => array
-                (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['cut'],
-                    'href'                => 'act=paste&amp;mode=cut',
-                    'icon'                => 'cut.gif'
-                ),
-                'delete' => array
-                (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['delete'],
-                    'href'                => 'act=delete',
-                    'icon'                => 'delete.gif',
-                    'attributes'          => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null) . '\'))return false;Backend.getScrollOffset()"'
-                ),
+                '!edit',
+                '!copy',
+                '!cut',
+                '!delete',
                 'toggle' => array
                 (
                     'label'               => &$GLOBALS['TL_LANG']['tl_document']['toggle'],
-                    'icon'                => 'visible.gif',
-                    'attributes'          => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                    'button_callback'     => array('\Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'toggleIcon')
+                    'icon'                => 'visible.svg',
+                    'href'                => 'act=toggle&amp;field=published',
+                    'primary'             => true,
                 ),
                 'feature' => array
                 (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['feature'],
-                    'icon'                => 'featured.gif',
-                    'attributes'          => 'onclick="Backend.getScrollOffset();return DocMan.toggleFeatured(this,%s)"',
-                    'button_callback'     => array('\Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'iconFeatured')
+                    'label'           => &$GLOBALS['TL_LANG']['tl_document']['feature'],
+                    'primary'         => true,
+                    'icon'            => 'featured.svg',
+                    'href'            => 'act=toggle&amp;field=featured',
                 ),
-                'show' => array
-                (
-                    'label'               => &$GLOBALS['TL_LANG']['tl_document']['show'],
-                    'href'                => 'act=show',
-                    'icon'                => 'show.gif'
-                )
+                'show'
             )
         ),
 
@@ -152,7 +126,6 @@ namespace {
             ),
             'headline' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['headline'],
                 'exclude'                 => true,
                 'search'                  => true,
                 'sorting'                 => true,
@@ -163,20 +136,18 @@ namespace {
             ),
             'alias' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['alias'],
                 'exclude'                 => true,
                 'search'                  => true,
                 'inputType'               => 'text',
                 'eval'                    => array('rgxp'=>'alias', 'unique'=>true, 'maxlength'=>128, 'tl_class'=>'w50'),
                 'save_callback' => array
                 (
-                    array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'generateAlias')
+                    array(Callbacks::class, 'generateAlias')
                 ),
                 'sql'                     => "varchar(128) BINARY NOT NULL default ''"
             ),
             'author' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['author'],
                 'default'                 => BackendUser::getInstance()->id,
                 'exclude'                 => true,
                 'filter'                  => true,
@@ -190,8 +161,7 @@ namespace {
             ),
             'date' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['date'],
-                'default'                 => time(),
+                'default'                 => \time(),
                 'exclude'                 => true,
                 'filter'                  => true,
                 'sorting'                 => true,
@@ -202,8 +172,7 @@ namespace {
             ),
             'time' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['time'],
-                'default'                 => time(),
+                'default'                 => \time(),
                 'exclude'                 => true,
                 'inputType'               => 'text',
                 'eval'                    => array('rgxp'=>'time', 'doNotCopy'=>true, 'tl_class'=>'w50'),
@@ -211,7 +180,6 @@ namespace {
             ),
             'subheadline' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['subheadline'],
                 'exclude'                 => true,
                 'search'                  => true,
                 'inputType'               => 'text',
@@ -220,7 +188,6 @@ namespace {
             ),
             'teaser' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['teaser'],
                 'exclude'                 => true,
                 'search'                  => true,
                 'inputType'               => 'textarea',
@@ -229,32 +196,29 @@ namespace {
             ),
             'singleSRC' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_content']['singleSRC'],
                 'exclude'                 => true,
                 'inputType'               => 'fileTree',
                 'eval'                    => array('filesOnly'=>true, 'fieldType'=>'radio'),
                 'save_callback'           => array
                 (
-                    array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'checkRequired'),
+                    array(Callbacks::class, 'checkRequired'),
                 ),
                 'sql'                     => "binary(16) NULL"
             ),
             'url' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['MSC']['url'],
                 'exclude'                 => true,
                 'search'                  => true,
                 'inputType'               => 'text',
                 'eval'                    => array('decodeEntities'=>true, 'maxlength'=>255, 'tl_class'=>'w50'),
                 'save_callback'           => array
                 (
-                    array('Rhyme\ContaoDocumentsBundle\Backend\Document\Callbacks', 'checkRequired'),
+                    array(Callbacks::class, 'checkRequired'),
                 ),
                 'sql'                     => "varchar(255) NOT NULL default ''"
             ),
             'target' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['MSC']['target'],
                 'exclude'                 => true,
                 'inputType'               => 'checkbox',
                 'eval'                    => array('tl_class'=>'w50 m12'),
@@ -262,25 +226,24 @@ namespace {
             ),
             'cssClass' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['cssClass'],
                 'exclude'                 => true,
                 'inputType'               => 'text',
                 'sql'                     => "varchar(255) NOT NULL default ''"
             ),
             'featured' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['featured'],
                 'exclude'                 => true,
                 'filter'                  => true,
+                'toggle'                  => true,
                 'inputType'               => 'checkbox',
                 'eval'                    => array('tl_class'=>'w50'),
                 'sql'                     => "char(1) NOT NULL default ''"
             ),
             'published' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['published'],
                 'exclude'                 => true,
                 'filter'                  => true,
+                'toggle'                  => true,
                 'flag'                    => 1,
                 'inputType'               => 'checkbox',
                 'eval'                    => array('doNotCopy'=>true),
@@ -288,7 +251,6 @@ namespace {
             ),
             'start' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['start'],
                 'exclude'                 => true,
                 'inputType'               => 'text',
                 'eval'                    => array('rgxp'=>'datim', 'datepicker'=>true, 'tl_class'=>'w50 wizard'),
@@ -296,7 +258,6 @@ namespace {
             ),
             'stop' => array
             (
-                'label'                   => &$GLOBALS['TL_LANG']['tl_document']['stop'],
                 'exclude'                 => true,
                 'inputType'               => 'text',
                 'eval'                    => array('rgxp'=>'datim', 'datepicker'=>true, 'tl_class'=>'w50 wizard'),

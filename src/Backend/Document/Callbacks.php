@@ -8,6 +8,15 @@
 namespace Rhyme\ContaoDocumentsBundle\Backend\Document;
 
 use Contao\Backend;
+use Contao\Config;
+use Contao\Controller;
+use Contao\DataContainer;
+use Contao\Date;
+use Contao\Image;
+use Contao\Input;
+use Contao\StringUtil;
+use Contao\System;
+use Contao\Versions;
 
 /**
  * Class Callbacks
@@ -51,28 +60,28 @@ class Callbacks extends Backend
 			$root = $this->User->document;
 		}
 
-		$id = strlen(\Input::get('id')) ? \Input::get('id') : CURRENT_ID;
+		$id = strlen(Input::get('id')) ? Input::get('id') : CURRENT_ID;
 
 		// Check current action
-		switch (\Input::get('act'))
+		switch (Input::get('act'))
 		{
 			case 'paste':
 				// Allow
 				break;
 
 			case 'create':
-				if (!strlen(\Input::get('pid')) || !in_array(\Input::get('pid'), $root))
+				if (!strlen(Input::get('pid')) || !in_array(Input::get('pid'), $root))
 				{
-					$this->log('Not enough permissions to create document items in document archive ID "'.\Input::get('pid').'"', __METHOD__, TL_ERROR);
+					$this->log('Not enough permissions to create document items in document archive ID "'.Input::get('pid').'"', __METHOD__, TL_ERROR);
 					$this->redirect('contao/main.php?act=error');
 				}
 				break;
 
 			case 'cut':
 			case 'copy':
-				if (!in_array(\Input::get('pid'), $root))
+				if (!in_array(Input::get('pid'), $root))
 				{
-					$this->log('Not enough permissions to '.\Input::get('act').' document item ID "'.$id.'" to document archive ID "'.\Input::get('pid').'"', __METHOD__, TL_ERROR);
+					$this->log('Not enough permissions to '.Input::get('act').' document item ID "'.$id.'" to document archive ID "'.Input::get('pid').'"', __METHOD__, TL_ERROR);
 					$this->redirect('contao/main.php?act=error');
 				}
 				// NO BREAK STATEMENT HERE
@@ -94,7 +103,7 @@ class Callbacks extends Backend
 
 				if (!in_array($objArchive->pid, $root))
 				{
-					$this->log('Not enough permissions to '.\Input::get('act').' document item ID "'.$id.'" of document archive ID "'.$objArchive->pid.'"', __METHOD__, TL_ERROR);
+					$this->log('Not enough permissions to '.Input::get('act').' document item ID "'.$id.'" of document archive ID "'.$objArchive->pid.'"', __METHOD__, TL_ERROR);
 					$this->redirect('contao/main.php?act=error');
 				}
 				break;
@@ -126,9 +135,9 @@ class Callbacks extends Backend
 				break;
 
 			default:
-				if (strlen(\Input::get('act')))
+				if (strlen(Input::get('act')))
 				{
-					$this->log('Invalid command "'.\Input::get('act').'"', __METHOD__, TL_ERROR);
+					$this->log('Invalid command "'.Input::get('act').'"', __METHOD__, TL_ERROR);
 					$this->redirect('contao/main.php?act=error');
 				}
 				elseif (!in_array($id, $root))
@@ -148,15 +157,15 @@ class Callbacks extends Backend
 	 * @return string
 	 * @throws \Exception
 	 */
-	public function generateAlias($varValue, \DataContainer $dc)
+	public function generateAlias($varValue, DataContainer $dc)
 	{
 		$autoAlias = false;
 
 		// Generate alias if there is none
-		if ($varValue == '')
+		if (empty($varValue))
 		{
 			$autoAlias = true;
-			$varValue = standardize(\StringUtil::restoreBasicEntities($dc->activeRecord->headline));
+			$varValue = StringUtil::standardize(StringUtil::restoreBasicEntities($dc->activeRecord->headline));
 		}
 
 		$objAlias = $this->Database->prepare("SELECT id FROM tl_document WHERE alias=?")
@@ -185,12 +194,12 @@ class Callbacks extends Backend
 	 * @return string
 	 * @throws \Exception
 	 */
-	public function checkRequired($varValue, \DataContainer $dc)
+	public function checkRequired($varValue, DataContainer $dc)
 	{
 		// Return if there is no active record (override all)
 		if ($dc->activeRecord)
 		{
-			if($varValue=='' && \Input::post('url') == '' && \Input::post('singleSRC') == '')
+			if (empty($varValue) && empty(Input::post('url')) && empty(Input::post('singleSRC')))
 			{
     			throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['requiredDocumentField'], $varValue));
 			}
@@ -206,7 +215,7 @@ class Callbacks extends Backend
 	 */
 	public function listDocuments($arrRow)
 	{
-		return '<div class="tl_content_left">' . $arrRow['headline'] . ' <span style="color:#b3b3b3;padding-left:3px">[' . \Date::parse(\Config::get('datimFormat'), $arrRow['date']) . ']</span></div>';
+		return '<div class="tl_content_left">' . $arrRow['headline'] . ' <span style="color:#b3b3b3;padding-left:3px">[' . Date::parse(Config::get('datimFormat'), $arrRow['date']) . ']</span></div>';
 	}
 
 
@@ -215,7 +224,7 @@ class Callbacks extends Backend
 	 * @param \\DataContainer
 	 * @return array
 	 */
-	public function getDocumentAlias(\DataContainer $dc)
+	public function getDocumentAlias(DataContainer $dc)
 	{
 		$arrPids = array();
 		$arrAlias = array();
@@ -244,7 +253,7 @@ class Callbacks extends Backend
 
 		if ($objAlias->numRows)
 		{
-			\System::loadLanguageFile('tl_article');
+            System::loadLanguageFile('tl_article');
 
 			while ($objAlias->next())
 			{
@@ -261,7 +270,7 @@ class Callbacks extends Backend
 	 * @param \\DataContainer
 	 * @return array
 	 */
-	public function getSourceOptions(\DataContainer $dc)
+	public function getSourceOptions(DataContainer $dc)
 	{
 		if ($this->User->isAdmin)
 		{
@@ -303,7 +312,7 @@ class Callbacks extends Backend
 	 * Adjust start end end time of the event based on date, span, startTime and endTime
 	 * @param \\DataContainer
 	 */
-	public function adjustTime(\DataContainer $dc)
+	public function adjustTime(DataContainer $dc)
 	{
 		// Return if there is no active record (override all)
 		if (!$dc->activeRecord)
@@ -323,9 +332,9 @@ class Callbacks extends Backend
 	 * @param \\DataContainer
 	 * @return string
 	 */
-	public function pagePicker(\DataContainer $dc)
+	public function pagePicker(DataContainer $dc)
 	{
-		return ' <a href="contao/page.php?do='.\Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((\Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . \Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
+		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.StringUtil::specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') === 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
 	}
 
 
@@ -341,10 +350,10 @@ class Callbacks extends Backend
 	 */
 	public function iconFeatured($row, $href, $label, $title, $icon, $attributes)
 	{
-		if (strlen(\Input::get('fid')))
+		if (strlen(Input::get('fid')))
 		{
-			$this->toggleFeatured(\Input::get('fid'), (\Input::get('state') == 1));
-			$this->redirect($this->getReferer());
+			$this->toggleFeatured(Input::get('fid'), (Input::get('state') == 1));
+			Controller::redirect(System::getReferer());
 		}
 
 		// Check permissions AFTER checking the fid, so hacking attempts are logged
@@ -360,7 +369,7 @@ class Callbacks extends Backend
 			$icon = 'featured_.gif';
 		}
 
-		return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.\Image::getHtml($icon, $label).'</a> ';
+		return '<a href="'.Controller::addToUrl($href).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
 	}
 
 
@@ -373,8 +382,8 @@ class Callbacks extends Backend
 	public function toggleFeatured($intId, $blnVisible)
 	{
 		// Check permissions to edit
-		\Input::setGet('id', $intId);
-		\Input::setGet('act', 'feature');
+		Input::setGet('id', $intId);
+		Input::setGet('act', 'feature');
 		$this->checkPermission();
 
 		// Check permissions to feature
@@ -384,11 +393,12 @@ class Callbacks extends Backend
 			$this->redirect('contao/main.php?act=error');
 		}
 
-		$objVersions = new \Versions('tl_document', $intId);
+		$objVersions = new Versions('tl_document', $intId);
 		$objVersions->initialize();
 
 		// Trigger the save_callback
-		if (is_array($GLOBALS['TL_DCA']['tl_document']['fields']['featured']['save_callback']))
+		if (!empty($GLOBALS['TL_DCA']['tl_document']['fields']['featured']['save_callback'])
+            && is_array($GLOBALS['TL_DCA']['tl_document']['fields']['featured']['save_callback']))
 		{
 			foreach ($GLOBALS['TL_DCA']['tl_document']['fields']['featured']['save_callback'] as $callback)
 			{
@@ -425,10 +435,10 @@ class Callbacks extends Backend
 	 */
 	public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
 	{
-		if (strlen(\Input::get('tid')))
+		if (strlen(Input::get('tid')))
 		{
-			$this->toggleVisibility(\Input::get('tid'), (\Input::get('state') == 1), (@func_get_arg(12) ?: null));
-			$this->redirect($this->getReferer());
+			$this->toggleVisibility(Input::get('tid'), (Input::get('state') == 1), (@func_get_arg(12) ?: null));
+            Controller::redirect(System::getReferer());
 		}
 
 		// Check permissions AFTER checking the tid, so hacking attempts are logged
@@ -444,7 +454,7 @@ class Callbacks extends Backend
 			$icon = 'invisible.gif';
 		}
 
-		return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.\Image::getHtml($icon, $label).'</a> ';
+		return '<a href="'.Controller::addToUrl($href).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
 	}
 
 
@@ -452,13 +462,13 @@ class Callbacks extends Backend
 	 * Disable/enable a user group
 	 * @param integer
 	 * @param boolean
-	 * @param \\DataContainer
+	 * @param DataContainer
 	 */
-	public function toggleVisibility($intId, $blnVisible, \DataContainer $dc=null)
+	public function toggleVisibility($intId, $blnVisible, DataContainer $dc=null)
 	{
 		// Check permissions to edit
-		\Input::setGet('id', $intId);
-		\Input::setGet('act', 'toggle');
+		Input::setGet('id', $intId);
+		Input::setGet('act', 'toggle');
 		$this->checkPermission();
 
 		// Check permissions to publish
@@ -468,11 +478,12 @@ class Callbacks extends Backend
 			$this->redirect('contao/main.php?act=error');
 		}
 
-		$objVersions = new \Versions('tl_document', $intId);
+		$objVersions = new Versions('tl_document', $intId);
 		$objVersions->initialize();
 
 		// Trigger the save_callback
-		if (is_array($GLOBALS['TL_DCA']['tl_document']['fields']['published']['save_callback']))
+		if (!empty($GLOBALS['TL_DCA']['tl_document']['fields']['published']['save_callback'])
+            && is_array($GLOBALS['TL_DCA']['tl_document']['fields']['published']['save_callback']))
 		{
 			foreach ($GLOBALS['TL_DCA']['tl_document']['fields']['published']['save_callback'] as $callback)
 			{
