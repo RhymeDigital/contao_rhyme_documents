@@ -7,7 +7,9 @@
 
 namespace Rhyme\ContaoDocumentsBundle\Model;
 
+use Contao\BackendUser;
 use Contao\Model;
+use Contao\Model\Collection;
 use Contao\System;
 
 /**
@@ -27,7 +29,7 @@ class Document extends Model
 	 * Current method being called
 	 * @var string
 	 */
-	protected static $strCurrentMethod = '';
+	protected static string $strCurrentMethod = '';
 
 
 	/**
@@ -44,12 +46,12 @@ class Document extends Model
 	 *
 	 * @param array $arrOptions The options array
 	 *
-	 * @return \Model|\Model\Collection|null A model, model collection or null if the result is empty
+	 * @return Model|Collection|null A model, model collection or null if the result is empty
 	 */
 	protected static function find(array $arrOptions)
 	{
         // !HOOK: custom actions
-        if (isset($GLOBALS['TL_HOOKS']['findDocuments']) && is_array($GLOBALS['TL_HOOKS']['findDocuments'])) {
+        if (isset($GLOBALS['TL_HOOKS']['findDocuments']) && \is_array($GLOBALS['TL_HOOKS']['findDocuments'])) {
             foreach ($GLOBALS['TL_HOOKS']['findDocuments'] as $callback) {
                 $objCallback = System::importStatic($callback[0]);
                 $objCallback->{$callback[1]}($arrOptions, static::$strCurrentMethod);
@@ -72,7 +74,7 @@ class Document extends Model
 	public static function countBy($strColumn=null, $varValue=null, array $arrOptions=array())
 	{
         // !HOOK: custom actions
-        if (isset($GLOBALS['TL_HOOKS']['countByDocuments']) && is_array($GLOBALS['TL_HOOKS']['countByDocuments'])) {
+        if (isset($GLOBALS['TL_HOOKS']['countByDocuments']) && \is_array($GLOBALS['TL_HOOKS']['countByDocuments'])) {
             foreach ($GLOBALS['TL_HOOKS']['countByDocuments'] as $callback) {
                 $objCallback = System::importStatic($callback[0]);
                 $objCallback->{$callback[1]}($strColumn, $varValue, $arrOptions, static::$strCurrentMethod);
@@ -90,26 +92,26 @@ class Document extends Model
 	 * @param array $arrPids    An array of parent IDs
 	 * @param array $arrOptions An optional options array
 	 *
-	 * @return \Model|null The NewsModel or null if there are no document
+	 * @return Model|Collection|null The document model or null if there are no documents
 	 */
 	public static function findPublishedByParentAndIdOrAlias($varId, $arrPids, array $arrOptions=array())
 	{
-		if (!is_array($arrPids) || empty($arrPids))
+		if (!\is_array($arrPids) || empty($arrPids))
 		{
 			return null;
 		}
 
 		$t = static::$strTable;
-		$arrColumns = array("($t.id=? OR $t.alias=?) AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
+		$arrColumns = array("($t.id=? OR $t.alias=?) AND $t.pid IN(" . \implode(',', \array_map('intval', $arrPids)) . ")");
 
-		if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 
 		static::$strCurrentMethod = 'findPublishedByParentAndIdOrAlias';
-		$varBuffer = static::findBy($arrColumns, array((is_numeric($varId) ? $varId : 0), $varId), $arrOptions);
+		$varBuffer = static::findBy($arrColumns, array((\is_numeric($varId) ? $varId : 0), $varId), $arrOptions);
 		static::$strCurrentMethod = '';
 		return $varBuffer;
 	}
@@ -121,21 +123,21 @@ class Document extends Model
      * @param mixed $varId      The numeric ID or alias name
      * @param array $arrOptions An optional options array
      *
-     * @return \Model|null The NewsModel or null if there are no document
+     * @return Model|Collection|null The document model or null if there are no documents
      */
     public static function findPublishedByIdOrAlias($varId, array $arrOptions=array())
     {
         $t = static::$strTable;
-        $arrColumns = !preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
+        $arrColumns = !\preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
 
-        if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
         {
-            $time = time();
+            $time = \time();
             $arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
         }
 
         static::$strCurrentMethod = 'findPublishedByIdOrAlias';
-        $varBuffer = static::findBy($arrColumns, $varId, $arrOptions);
+        $varBuffer = static::findBy($arrColumns, [$varId], $arrOptions);
         static::$strCurrentMethod = '';
         return $varBuffer;
     }
@@ -147,12 +149,12 @@ class Document extends Model
      * @param mixed $varId      The numeric ID or alias name
      * @param array $arrOptions An optional options array
      *
-     * @return \Model|null The NewsModel or null if there are no document
+     * @return Model|Collection|null The document model or null if there are no documents
      */
     public static function findByIdOrAlias($varId, array $arrOptions=array())
     {
         $t = static::$strTable;
-        $arrColumns = !preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
+        $arrColumns = !\preg_match('/^[1-9]\d*$/', $varId) ? array("$t.alias=?") : array("$t.id=?");
 
         static::$strCurrentMethod = 'findByIdOrAlias';
         $varBuffer = static::findBy($arrColumns, $varId, $arrOptions);
@@ -170,17 +172,17 @@ class Document extends Model
 	 * @param integer $intOffset   An optional offset
 	 * @param array   $arrOptions  An optional options array
 	 *
-	 * @return \Model\Collection|null A collection of models or null if there are no document
+	 * @return Collection|null A collection of models or null if there are no document
 	 */
 	public static function findPublishedByPids($arrPids, $blnFeatured=null, $intLimit=0, $intOffset=0, array $arrOptions=array())
 	{
-		if (!is_array($arrPids) || empty($arrPids))
+		if (!\is_array($arrPids) || empty($arrPids))
 		{
 			return null;
 		}
 
 		$t = static::$strTable;
-		$arrColumns = array("$t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
+		$arrColumns = array("$t.pid IN(" . \implode(',', \array_map('intval', $arrPids)) . ")");
 
 		if ($blnFeatured === true)
 		{
@@ -195,7 +197,7 @@ class Document extends Model
         $request = System::getContainer()->get('request_stack')->getCurrentRequest();
         if ($request && System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest($request) )
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 
@@ -225,13 +227,13 @@ class Document extends Model
 	 */
 	public static function countPublishedByPids($arrPids, $blnFeatured=null, array $arrOptions=array())
 	{
-		if (!is_array($arrPids) || empty($arrPids))
+		if (!\is_array($arrPids) || empty($arrPids))
 		{
 			return 0;
 		}
 
 		$t = static::$strTable;
-		$arrColumns = array("$t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
+		$arrColumns = array("$t.pid IN(" . \implode(',', \array_map('intval', $arrPids)) . ")");
 
 		if ($blnFeatured === true)
 		{
@@ -242,9 +244,9 @@ class Document extends Model
 			$arrColumns[] = "$t.featured=''";
 		}
 
-        if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 
@@ -261,16 +263,16 @@ class Document extends Model
 	 * @param integer $intPid     The document archive ID
 	 * @param array   $arrOptions An optional options array
 	 *
-	 * @return \Model\Collection|null A collection of models or null if there are no document
+	 * @return Collection|null A collection of models or null if there are no document
 	 */
 	public static function findPublishedDefaultByPid($intPid, array $arrOptions=array())
 	{
 		$t = static::$strTable;
 		$arrColumns = array("$t.pid=?");
 
-        if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 
@@ -293,18 +295,18 @@ class Document extends Model
 	 * @param integer $intLimit   An optional limit
 	 * @param array   $arrOptions An optional options array
 	 *
-	 * @return \Model\Collection|null A collection of models or null if there are no document
+	 * @return Collection|null A collection of models or null if there are no document
 	 */
 	public static function findPublishedByPid($intId, $intLimit=0, array $arrOptions=array())
 	{
-		$time = time();
+		$time = \time();
 		$t = static::$strTable;
 
-		$arrColumns = array();
+        $arrColumns = array("$t.pid=?");
 
-        if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
         {
-            $arrColumns[] = "$t.pid=? AND ($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
+            $arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
         }
 
 		if (!isset($arrOptions['order']))
@@ -334,21 +336,21 @@ class Document extends Model
 	 * @param integer $intOffset  An optional offset
 	 * @param array   $arrOptions An optional options array
 	 *
-	 * @return \Model\Collection|null A collection of models or null if there are no document
+	 * @return Collection|null A collection of models or null if there are no document
 	 */
 	public static function findPublishedFromToByPids($intFrom, $intTo, $arrPids, $intLimit=0, $intOffset=0, array $arrOptions=array())
 	{
-		if (!is_array($arrPids) || empty($arrPids))
+		if (!\is_array($arrPids) || empty($arrPids))
 		{
 			return null;
 		}
 
 		$t = static::$strTable;
-		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
+		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . \implode(',', \array_map('intval', $arrPids)) . ")");
 
-		if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 
@@ -379,17 +381,17 @@ class Document extends Model
 	 */
 	public static function countPublishedFromToByPids($intFrom, $intTo, $arrPids, array $arrOptions=array())
 	{
-		if (!is_array($arrPids) || empty($arrPids))
+		if (!\is_array($arrPids) || empty($arrPids))
 		{
 			return null;
 		}
 
 		$t = static::$strTable;
-		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . implode(',', array_map('intval', $arrPids)) . ")");
+		$arrColumns = array("$t.date>=? AND $t.date<=? AND $t.pid IN(" . \implode(',', \array_map('intval', $arrPids)) . ")");
 
-        if (BE_USER_LOGGED_IN !== true)
+        if (!static::isPreviewMode($arrOptions))
 		{
-			$time = time();
+			$time = \time();
 			$arrColumns[] = "($t.start='' OR $t.start<$time) AND ($t.stop='' OR $t.stop>$time) AND $t.published=1";
 		}
 

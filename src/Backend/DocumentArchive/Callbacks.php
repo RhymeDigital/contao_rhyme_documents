@@ -8,6 +8,13 @@
 namespace Rhyme\ContaoDocumentsBundle\Backend\DocumentArchive;
 
 use Contao\Backend;
+use Contao\CalendarBundle\Security\ContaoCalendarPermissions;
+use Contao\Controller;
+use Contao\Image;
+use Contao\Input;
+use Contao\StringUtil;
+use Contao\System;
+use Rhyme\ContaoDocumentsBundle\Security\Permissions;
 
 /**
  * Class Callbacks
@@ -53,14 +60,16 @@ class Callbacks extends Backend
 
 		$GLOBALS['TL_DCA']['tl_document_archive']['list']['sorting']['root'] = $root;
 
+        $security = System::getContainer()->get('security.helper');
+
 		// Check permissions to add archives
-		if (!$this->User->hasAccess('create', 'documentp'))
+        if (!$security?->isGranted(Permissions::USER_CAN_CREATE_DOCUMENTS))
 		{
 			$GLOBALS['TL_DCA']['tl_document_archive']['config']['closed'] = true;
 		}
 
 		// Check current action
-		switch (\Input::get('act'))
+		switch (Input::get('act'))
 		{
 			case 'create':
 			case 'select':
@@ -69,7 +78,7 @@ class Callbacks extends Backend
 
 			case 'edit':
 				// Dynamically add the record to the user profile
-				if (!in_array(\Input::get('id'), $root))
+				if (!in_array(Input::get('id'), $root))
 				{
 					$arrNew = $this->Session->get('new_records');
 
@@ -82,12 +91,12 @@ class Callbacks extends Backend
 													   ->limit(1)
 													   ->execute($this->User->id);
 
-							$arrNewp = \deserialize($objUser->documentp);
+							$arrNewp = StringUtil::deserialize($objUser->documentp);
 
 							if (is_array($arrNewp) && in_array('create', $arrNewp))
 							{
-								$arrNews = \deserialize($objUser->document);
-								$arrNews[] = \Input::get('id');
+								$arrNews = StringUtil::deserialize($objUser->document);
+								$arrNews[] = Input::get('id');
 
 								$this->Database->prepare("UPDATE tl_user SET document=? WHERE id=?")
 											   ->execute(serialize($arrNews), $this->User->id);
@@ -101,12 +110,12 @@ class Callbacks extends Backend
 													   ->limit(1)
 													   ->execute($this->User->groups[0]);
 
-							$arrNewp = \deserialize($objGroup->documentp);
+							$arrNewp = StringUtil::deserialize($objGroup->documentp);
 
 							if (is_array($arrNewp) && in_array('create', $arrNewp))
 							{
-								$arrNews = \deserialize($objGroup->document);
-								$arrNews[] = \Input::get('id');
+								$arrNews = StringUtil::deserialize($objGroup->document);
+								$arrNews[] = Input::get('id');
 
 								$this->Database->prepare("UPDATE tl_user_group SET document=? WHERE id=?")
 											   ->execute(serialize($arrNews), $this->User->groups[0]);
@@ -114,7 +123,7 @@ class Callbacks extends Backend
 						}
 
 						// Add new element to the user object
-						$root[] = \Input::get('id');
+						$root[] = Input::get('id');
 						$this->User->document = $root;
 					}
 				}
@@ -123,9 +132,9 @@ class Callbacks extends Backend
 			case 'copy':
 			case 'delete':
 			case 'show':
-				if (!in_array(\Input::get('id'), $root) || (\Input::get('act') == 'delete' && !$this->User->hasAccess('delete', 'documentp')))
+				if (!in_array(Input::get('id'), $root) || (Input::get('act') == 'delete' && !$this->User->hasAccess('delete', 'documentp')))
 				{
-					$this->log('Not enough permissions to '.\Input::get('act').' document archive ID "'.\Input::get('id').'"', __METHOD__, TL_ERROR);
+					$this->log('Not enough permissions to '.Input::get('act').' document archive ID "'.Input::get('id').'"', __METHOD__, TL_ERROR);
 					$this->redirect('contao/main.php?act=error');
 				}
 				break;
@@ -168,7 +177,15 @@ class Callbacks extends Backend
 	 */
 	public function editHeader($row, $href, $label, $title, $icon, $attributes)
 	{
-		return $this->User->canEditFieldsOf('tl_document_archive') ? '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.\Image::getHtml($icon, $label).'</a> ' : \Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        $security = System::getContainer()->get('security.helper');
+
+        // Check permissions to add archives
+        if (!$security?->isGranted(Permissions::USER_CAN_EDIT_DOCUMENTS))
+        {
+            return Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        }
+
+		return '<a href="'.Controller::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
 	}
 
 
@@ -184,7 +201,15 @@ class Callbacks extends Backend
 	 */
 	public function copyArchive($row, $href, $label, $title, $icon, $attributes)
 	{
-		return $this->User->hasAccess('create', 'documentp') ? '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.\Image::getHtml($icon, $label).'</a> ' : \Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        $security = System::getContainer()->get('security.helper');
+
+        // Check permissions to add archives
+        if (!$security?->isGranted(Permissions::USER_CAN_CREATE_DOCUMENTS))
+        {
+            return Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        }
+
+		return '<a href="'.Controller::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
 	}
 
 
@@ -200,6 +225,14 @@ class Callbacks extends Backend
 	 */
 	public function deleteArchive($row, $href, $label, $title, $icon, $attributes)
 	{
-		return $this->User->hasAccess('delete', 'documentp') ? '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.specialchars($title).'"'.$attributes.'>'.\Image::getHtml($icon, $label).'</a> ' : \Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        $security = System::getContainer()->get('security.helper');
+
+        // Check permissions to add archives
+        if (!$security?->isGranted(Permissions::USER_CAN_EDIT_DOCUMENTS))
+        {
+            return Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
+        }
+
+		return '<a href="'.Controller::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
 	}
 }

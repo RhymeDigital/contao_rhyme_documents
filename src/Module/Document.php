@@ -7,6 +7,10 @@
  
 namespace Rhyme\ContaoDocumentsBundle\Module;
 
+use Contao\BackendUser;
+use Contao\Module;
+use Contao\StringUtil;
+use FrontendUser;
 use Rhyme\ContaoDocumentsBundle\Model\DocumentArchive as DocumentArchiveModel;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 
@@ -14,9 +18,8 @@ use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
  * Class Document
  * @package Rhyme\ContaoDocumentsBundle\Module
  */
-abstract class Document extends \Module
+abstract class Document extends Module
 {
-
 
 	/**
 	 * Display a wildcard in the back end
@@ -34,17 +37,17 @@ abstract class Document extends \Module
 
 	/**
 	 * Sort out protected archives
-	 * @param array
+	 *
+	 * @param array $arrArchives
 	 * @return array
 	 */
 	protected function sortOutProtected($arrArchives)
 	{
-		if (BE_USER_LOGGED_IN === true || !\is_array($arrArchives) || empty($arrArchives))
+		if (BackendUser::getInstance()->id || !\is_array($arrArchives) || empty($arrArchives))
 		{
 			return $arrArchives;
 		}
 
-		$this->import('FrontendUser', 'User');
 		$objArchive = DocumentArchiveModel::findMultipleByIds($arrArchives);
 		$arrArchives = array();
 
@@ -54,14 +57,14 @@ abstract class Document extends \Module
 			{
 				if ($objArchive->protected)
 				{
-					if (FE_USER_LOGGED_IN !== true)
+					if (!FrontendUser::getInstance()->id)
 					{
 						continue;
 					}
 
-					$groups = deserialize($objArchive->groups);
+					$groups = StringUtil::deserialize($objArchive->groups);
 
-					if (!\is_array($groups) || empty($groups) || !\count(\array_intersect($groups, $this->User->groups)))
+					if (!\is_array($groups) || empty($groups) || !\count(\array_intersect($groups, FrontendUser::getInstance()->groups)))
 					{
 						continue;
 					}

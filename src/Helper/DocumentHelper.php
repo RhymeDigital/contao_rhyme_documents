@@ -69,31 +69,25 @@ class DocumentHelper extends Controller
         $objTemplate->target = '';
 
         // Clean the RTE output
-        if ($objDocument->teaser != '')
+        if (!empty($objDocument->teaser))
         {
-            if ($objPage->outputFormat == 'xhtml')
-            {
-                $objTemplate->teaser = StringUtil::toXhtml($objDocument->teaser);
-            }
-            else
-            {
-                $objTemplate->teaser = StringUtil::toHtml5($objDocument->teaser);
-            }
-
+            $objTemplate->teaser = $objDocument->teaser;
             $objTemplate->teaser = StringUtil::encodeEmail($objTemplate->teaser);
         }
 
         $arrMeta = static::getMetaFields($objDocument, $objSource);
 
         // Add the meta information
-        $objTemplate->date = $arrMeta['date'];
+        $objTemplate->date = $arrMeta['date'] ?? '';
         $objTemplate->hasMetaFields = !empty($arrMeta);
         $objTemplate->timestamp = $objDocument->date;
-        $objTemplate->author = $arrMeta['author'];
-        $objTemplate->datetime = Date::parse($objPage->datimFormat, $objDocument->date);
+        $objTemplate->author = $arrMeta['author'] ?? '';
+        $objTemplate->datetime = Date::parse(Config::get('datimFormat'), $objDocument->date);
+
+        $rootDir = System::getContainer()->getParameter('kernel.project_dir');
 
         // Add the document
-        if ($objDocument->singleSRC != '')
+        if (!empty($objDocument->singleSRC))
         {
             $objModel = FilesModel::findByUuid($objDocument->singleSRC);
 
@@ -104,7 +98,7 @@ class DocumentHelper extends Controller
                     $objTemplate->text = '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
                 }
             }
-            elseif (\is_file(TL_ROOT . '/' . $objModel->path))
+            elseif (\is_file($rootDir . '/' . $objModel->path))
             {
                 // Do not override the field now that we have a model registry (see #6303)
                 $arrDocument = $objDocument->row();
@@ -112,17 +106,17 @@ class DocumentHelper extends Controller
                 // Override the default image size
                 if ($objSource !== null && $objSource->imgSize != '')
                 {
-                    $size = \deserialize($objSource->imgSize, true);
+                    $size = StringUtil::deserialize($objSource->imgSize, true);
 
-                    if ($size[0] > 0 || $size[1] > 0 || is_numeric($size[2]))
+                    if ((int)($size[0] ?? 0) > 0 || (int)($size[1] ?? 0) > 0 || \is_numeric($size[2] ?? null))
                     {
                         $arrDocument['size'] = $objSource->imgSize;
                     }
                 }
 
                 $objTemplate->filePath = $arrDocument['singleSRC'] = $objModel->path;
-                $objTemplate->fileType = str_replace('.', ', ', $objModel->extension);
-                $objTemplate->class .= (strlen($objTemplate->class) > 0 ? ' ' : '') . strtolower($objTemplate->fileType);
+                $objTemplate->fileType = \str_replace('.', ', ', $objModel->extension);
+                $objTemplate->class .= ($objTemplate->class !== '' ? ' ' : '') . \strtolower($objTemplate->fileType);
             }
         }
 
@@ -134,7 +128,7 @@ class DocumentHelper extends Controller
 
         $arrRel = array();
 
-        if (strncmp($objDocument->robots, 'noindex,nofollow', 16) === 0)
+        if (\strncmp($objDocument->robots ?? '', 'noindex,nofollow', 16) === 0)
         {
             $arrRel[] = 'nofollow';
         }
@@ -148,10 +142,10 @@ class DocumentHelper extends Controller
         // Override the rel attribute
         if (!empty($arrRel))
         {
-            $objTemplate->rel = ' rel="' . implode(' ', $arrRel) . '"';
+            $objTemplate->rel = ' rel="' . \implode(' ', $arrRel) . '"';
         }
 
-        if (isset($GLOBALS['TL_HOOKS']['parseDocuments']) && is_array($GLOBALS['TL_HOOKS']['parseDocuments']))
+        if (isset($GLOBALS['TL_HOOKS']['parseDocuments']) && \is_array($GLOBALS['TL_HOOKS']['parseDocuments']))
         {
             foreach ($GLOBALS['TL_HOOKS']['parseDocuments'] as $callback)
             {
@@ -166,7 +160,8 @@ class DocumentHelper extends Controller
 
     /**
      * Generate a URL and return it as string
-     * @param object
+     *
+     * @param object $objItem
      * @return string
      */
     public static function generateDocumentUrl($objItem)
@@ -180,17 +175,17 @@ class DocumentHelper extends Controller
         }
 
         // Link to the jumpTo page
-        if (static::$arrUrlCache[$strCacheKey] === null)
+        if ((static::$arrUrlCache[$strCacheKey] ?? null) === null)
         {
             $objPage = PageModel::findByPk($objItem->getRelated('pid')->jumpTo);
 
             if ($objPage === null)
             {
-                static::$arrUrlCache[$strCacheKey] = ampersand(Environment::get('request'), true);
+                static::$arrUrlCache[$strCacheKey] = StringUtil::ampersand(Environment::get('request'), true);
             }
             else
             {
-                static::$arrUrlCache[$strCacheKey] = ampersand(Controller::generateFrontendUrl($objPage->row(), ((Config::get('useAutoItem') && !Config::get('disableAlias')) ?  '/' : '/items/') . ((!Config::get('disableAlias') && $objItem->alias != '') ? $objItem->alias : $objItem->id)));
+                static::$arrUrlCache[$strCacheKey] = StringUtil::ampersand($objPage->getFrontendUrl());
             }
         }
 
@@ -218,11 +213,11 @@ class DocumentHelper extends Controller
         if (!empty($objItem->url))
         {
             // Link to an external page
-            static::$arrDownloadCache[$strCacheKey] = \ampersand($objItem->url);
+            static::$arrDownloadCache[$strCacheKey] = StringUtil::ampersand($objItem->url);
         }
 
         // Link to the document
-        if (static::$arrDownloadCache[$strCacheKey] === null)
+        if ((static::$arrDownloadCache[$strCacheKey] ?? null) === null)
         {
             // Return if there is no file
             if ($objItem->singleSRC == '')
@@ -237,7 +232,7 @@ class DocumentHelper extends Controller
                 static::$arrDownloadCache[$strCacheKey] = '#';
             }
 
-            $allowedDownload = \trimsplit(',', \strtolower(Config::get('allowedDownload')));
+            $allowedDownload = StringUtil::trimsplit(',', \strtolower(Config::get('allowedDownload')));
 
             // Return if the file type is not allowed
             if (!\in_array($objFile->extension, $allowedDownload))
@@ -248,7 +243,7 @@ class DocumentHelper extends Controller
             $file = Input::get('file', true);
 
             // Send the file to the browser and do not send a 404 header (see #4632)
-            if ($file != '' && $file == $objFile->path)
+            if (!empty($file) && $file == $objFile->path)
             {
                 Controller::sendFileToBrowser($file);
             }
@@ -296,7 +291,7 @@ class DocumentHelper extends Controller
             $objDocument = $objDocuments->current();
             $arrDocuments[] = static::parseDocument(
                 $objDocument,
-                ((++$count == 1) ? ' first' : '') . (($count == $limit) ? ' last' : '') . ((($count % 2) == 0) ? ' odd' : ' even'),
+                ((++$count === 1) ? ' first' : '') . (($count === $limit) ? ' last' : '') . ((($count % 2) === 0) ? ' odd' : ' even'),
                 $count,
                 $objSource,
                 $strTemplate
@@ -321,9 +316,9 @@ class DocumentHelper extends Controller
             return array();
         }
 
-        $meta = \deserialize($objSource->document_metaFields);
+        $meta = StringUtil::deserialize($objSource->document_metaFields, true);
 
-        if (!\is_array($meta))
+        if (empty($meta))
         {
             return array();
         }
@@ -336,7 +331,7 @@ class DocumentHelper extends Controller
             switch ($field)
             {
                 case 'date':
-                    $return['date'] = Date::parse($objPage->datimFormat, $objDocument->date);
+                    $return['date'] = Date::parse(Config::get('datimFormat'), $objDocument->date);
                     break;
 
                 case 'author':
@@ -352,7 +347,7 @@ class DocumentHelper extends Controller
         {
             foreach ($GLOBALS['TL_HOOKS']['getDocumentMetaFields'] as $callback)
             {
-                $objCallback = \System::importStatic($callback[0]);
+                $objCallback = System::importStatic($callback[0]);
                 $return = $objCallback->{$callback[1]}($return, $objDocument, $objSource);
             }
         }

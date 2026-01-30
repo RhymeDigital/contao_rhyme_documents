@@ -11,6 +11,7 @@ use Contao\Input;
 use Contao\Config;
 use Contao\Pagination;
 use Contao\BackendTemplate;
+use Contao\StringUtil;
 use Contao\System;
 use Rhyme\ContaoDocumentsBundle\Module\Document as Document_Module;
 use Rhyme\ContaoDocumentsBundle\Helper\DocumentHelper;
@@ -45,15 +46,15 @@ class Lister extends Document_Module
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
-			$objTemplate->href = 'contao/main.php?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
+			$objTemplate->href = 'contao?do=themes&amp;table=tl_module&amp;act=edit&amp;id=' . $this->id;
 
 			return $objTemplate->parse();
 		}
 
-		$this->document_archives = $this->sortOutProtected(\deserialize($this->document_archives));
+		$this->document_archives = $this->sortOutProtected(StringUtil::deserialize($this->document_archives, true));
 
 		// Return if there are no archives
-		if (!\is_array($this->document_archives) || empty($this->document_archives))
+		if (empty($this->document_archives))
 		{
 			return '';
 		}
@@ -68,21 +69,22 @@ class Lister extends Document_Module
 	 */
 	protected function compile()
 	{
-		$offset = \intval($this->skipFirst);
+		$offset = (int)$this->skipFirst;
 		$limit = null;
 
 		// Maximum number of items
+        $this->numberOfItems = (int)$this->numberOfItems;
 		if ($this->numberOfItems > 0)
 		{
 			$limit = $this->numberOfItems;
 		}
 
 		// Handle featured document
-		if ($this->document_featured == 'featured')
+		if (($this->document_featured ?? null) === 'featured')
 		{
 			$blnFeatured = true;
 		}
-		elseif ($this->document_featured == 'unfeatured')
+		elseif (($this->document_featured ?? null) === 'unfeatured')
 		{
 			$blnFeatured = false;
 		}
@@ -132,7 +134,7 @@ class Lister extends Document_Module
 			// Set limit and offset
 			$limit = $this->perPage;
 			$offset += (\max($page, 1) - 1) * $this->perPage;
-			$skip = \intval($this->skipFirst);
+			$skip = (int)$this->skipFirst;
 
 			// Overall limit
 			if ($offset + $limit > $total + $skip)
@@ -144,7 +146,7 @@ class Lister extends Document_Module
 			$objPagination = new Pagination($total, $this->perPage, Config::get('maxPaginationLinks'), $id);
 			$this->Template->pagination = $objPagination->generate("\n  ");
 		}
-
+        
 		// Get the items
 		if (isset($limit))
 		{

@@ -8,15 +8,15 @@
 namespace Rhyme\ContaoDocumentsBundle\Model;
 
 
+use Contao\Model;
+
 /**
  * Reads and writes document archives
  *
  * @copyright  Rhyme 2021
-
-
  * @package    Document_Management
  */
-class DocumentArchive extends \Model
+class DocumentArchive extends Model
 {
 
 	/**

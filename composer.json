@@ -1,6 +1,6 @@
 {
     "name": "rhymedigital/contao_rhyme_documents",
-    "description": "A Contao CMS 4.x bundle that allows users to more easily work with documents from a single repository.",
+    "description": "A Contao CMS 5.3+ bundle that allows users to more easily work with documents from a single repository.",
     "minimum-stability": "stable",
     "type": "contao-bundle",
     "license": "LGPL-2.1-or-later",
@@ -14,8 +14,7 @@
         }
     ],
     "require": {
-        "php": "^7.1 || ^8.0",
-        "contao/core-bundle": "^4.4 || ^5.0"
+        "contao/core-bundle": "^5.3"
     },
     "require-dev": {
         "contao/manager-plugin": "^2.7"
