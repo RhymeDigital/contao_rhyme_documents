@@ -18,10 +18,11 @@ namespace {
         // Config
         'config' => array
         (
-            'dataContainer'               => DC_Table::class,
-            'ctable'                      => array('tl_document'),
-            'switchToEdit'                => true,
-            'enableVersioning'            => true,
+            'dataContainer'       => DC_Table::class,
+            'ctable'              => array('tl_document'),
+            'switchToEdit'        => true,
+            'enableVersioning'    => true,
+            'backendSearchIgnore' => true,
             'onload_callback' => array
             (
                 array('Rhyme\ContaoDocumentsBundle\Backend\DocumentArchive\Callbacks', 'checkPermission'),
