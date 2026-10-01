@@ -1,6 +1,9 @@
+<?php
+use Contao\StringUtil;
+?>
 
 <div class="layout_nameonly arc_<?= $this->archive->id; ?> block <?= $this->class; ?>">
 
-  <a href="<?= $this->download; ?>" title="<?= \Contao\StringUtil::specialchars($this->documentHeadline) ?>"<?= $this->target ?><?= $this->rel ?>><?= $this->documentHeadline; ?></a>
+  <a href="<?= $this->download; ?>" title="<?= StringUtil::specialchars($this->documentHeadline) ?>"<?= $this->target ?><?= $this->rel ?>><?= $this->documentHeadline; ?></a>
 
 </div>

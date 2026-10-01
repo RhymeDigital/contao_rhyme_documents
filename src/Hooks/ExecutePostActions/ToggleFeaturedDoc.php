@@ -25,7 +25,7 @@ class ToggleFeaturedDoc
     
     public function run($strAction, $dc)
     {
-        if($strAction=='toggleFeaturedDoc')
+        if ($strAction === 'toggleFeaturedDoc')
         {
 			$callbacks = System::importStatic(Callbacks::class);
 			$callbacks->toggleFeatured(Input::post('id'), ((Input::post('state') == 1) ? true : false));

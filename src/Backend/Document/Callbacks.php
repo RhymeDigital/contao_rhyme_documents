@@ -1,152 +1,163 @@
 <?php
 
 /**
- * Document management for Contao Open Source CMS
- * @license    http://opensource.org/licenses/lgpl-3.0.html
+ *  Document management for Contao Open Source CMS
+ *
+ *  Copyright (c) 2026 Rhyme Digital, LLC.
+ *
+ *  @link			https://rhyme.digital
+ *  @license		https://www.gnu.org/licenses/lgpl-3.0.txt LGPL
  */
- 
+
+declare(strict_types=1);
+
 namespace Rhyme\ContaoDocumentsBundle\Backend\Document;
 
 use Contao\Backend;
+use Contao\BackendUser;
 use Contao\Config;
 use Contao\Controller;
+use Contao\CoreBundle\Exception\AccessDeniedException;
 use Contao\DataContainer;
+use Contao\Database;
 use Contao\Date;
 use Contao\Image;
 use Contao\Input;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Versions;
+use Rhyme\ContaoDocumentsBundle\Model\Document;
 
-/**
- * Class Callbacks
- *
- * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  Rhyme 2021
-
-
- * @package    Document_Management
- */
 class Callbacks extends Backend
 {
 
 	/**
-	 * Import the back end user object
+	 * Make constructor public
 	 */
 	public function __construct()
 	{
 		parent::__construct();
-		$this->import('Contao\BackendUser', 'User');
 	}
 
 
 	/**
 	 * Check permissions to edit table tl_document
 	 */
-	public function checkPermission()
+	public function checkPermission($dc)
 	{
-		if ($this->User->isAdmin)
-		{
-			return;
-		}
+        $t = Document::getTable();
+        $beUser = BackendUser::getInstance();
 
-		// Set the root IDs
-		if (!is_array($this->User->document) || empty($this->User->document))
-		{
-			$root = array(0);
-		}
-		else
-		{
-			$root = $this->User->document;
-		}
+        if ($beUser?->isAdmin) {
+            return;
+        }
 
-		$id = strlen(Input::get('id')) ? Input::get('id') : CURRENT_ID;
+        $objSession = System::getContainer()->get('request_stack')->getSession();
 
-		// Check current action
-		switch (Input::get('act'))
-		{
-			case 'paste':
-				// Allow
-				break;
+        // Set root IDs
+        if (empty($beUser->document) || !is_array($beUser->document))
+        {
+            $root = array(0);
+        }
+        else
+        {
+            $root = $beUser->document;
+        }
 
-			case 'create':
-				if (!strlen(Input::get('pid')) || !in_array(Input::get('pid'), $root))
-				{
-					$this->log('Not enough permissions to create document items in document archive ID "'.Input::get('pid').'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				break;
+        $id = \strlen((string)Input::get('id')) ? Input::get('id') : $dc->currentPid;
 
-			case 'cut':
-			case 'copy':
-				if (!in_array(Input::get('pid'), $root))
-				{
-					$this->log('Not enough permissions to '.Input::get('act').' document item ID "'.$id.'" to document archive ID "'.Input::get('pid').'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				// NO BREAK STATEMENT HERE
+        // Check current action
+        switch (Input::get('act'))
+        {
+            case 'paste':
+            case 'select':
+                // Check currentId here (see #247)
+                if (!\in_array($dc->currentPid, $root))
+                {
+                    throw new AccessDeniedException('Not enough permissions to access document archive ID ' . $id . '.');
+                }
+                break;
 
-			case 'edit':
-			case 'show':
-			case 'delete':
-			case 'toggle':
-			case 'feature':
-				$objArchive = $this->Database->prepare("SELECT pid FROM tl_document WHERE id=?")
-											 ->limit(1)
-											 ->execute($id);
+            case 'create':
+            case 'cut':
+            case 'copy':
+                $pid = Input::get('pid');
 
-				if ($objArchive->numRows < 1)
-				{
-					$this->log('Invalid document item ID "'.$id.'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
+                // Get document ID
+                if (Input::get('mode') == 1)
+                {
+                    $objField = Database::getInstance()->prepare("SELECT pid FROM {$t} WHERE id=?")
+                                               ->limit(1)
+                                               ->execute(Input::get('pid'));
 
-				if (!in_array($objArchive->pid, $root))
-				{
-					$this->log('Not enough permissions to '.Input::get('act').' document item ID "'.$id.'" of document archive ID "'.$objArchive->pid.'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				break;
+                    if ($objField->numRows < 1)
+                    {
+                        throw new AccessDeniedException('Invalid document field ID ' . Input::get('pid') . '.');
+                    }
 
-			case 'select':
-			case 'editAll':
-			case 'deleteAll':
-			case 'overrideAll':
-			case 'cutAll':
-			case 'copyAll':
-				if (!in_array($id, $root))
-				{
-					$this->log('Not enough permissions to access document archive ID "'.$id.'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
+                    $pid = $objField->pid;
+                }
 
-				$objArchive = $this->Database->prepare("SELECT id FROM tl_document WHERE pid=?")
-											 ->execute($id);
+                if (!in_array($pid, $root))
+                {
+                    throw new AccessDeniedException('Not enough permissions to ' . Input::get('act') . ' document field ID ' . $id . ' to document ID ' . $pid . '.');
+                }
 
-				if ($objArchive->numRows < 1)
-				{
-					$this->log('Invalid document archive ID "'.$id.'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
+                if (Input::get('act') === 'create')
+                {
+                    break;
+                }
+            // no break
 
-				$session = $this->Session->getData();
-				$session['CURRENT']['IDS'] = array_intersect($session['CURRENT']['IDS'], $objArchive->fetchEach('id'));
-				$this->Session->setData($session);
-				break;
+            case 'edit':
+            case 'show':
+            case 'delete':
+            case 'toggle':
+                $objField = Database::getInstance()->prepare("SELECT pid FROM {$t} WHERE id=?")
+                                           ->limit(1)
+                                           ->execute($id);
 
-			default:
-				if (strlen(Input::get('act')))
-				{
-					$this->log('Invalid command "'.Input::get('act').'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				elseif (!in_array($id, $root))
-				{
-					$this->log('Not enough permissions to access document archive ID ' . $id, __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				break;
-		}
+                if ($objField->numRows < 1)
+                {
+                    throw new AccessDeniedException('Invalid document ID ' . $id . '.');
+                }
+
+                if (!in_array($objField->pid, $root))
+                {
+                    throw new AccessDeniedException('Not enough permissions to ' . Input::get('act') . ' document ID ' . $id . ' of document ID ' . $objField->pid . '.');
+                }
+                break;
+
+            case 'editAll':
+            case 'deleteAll':
+            case 'overrideAll':
+            case 'cutAll':
+            case 'copyAll':
+                if (!in_array($id, $root))
+                {
+                    throw new AccessDeniedException('Not enough permissions to access document ID ' . $id . '.');
+                }
+
+                $objDocument = Database::getInstance()->prepare("SELECT id FROM {$t} WHERE pid=?")
+                                          ->execute($id);
+
+                $session = $objSession->all();
+                $session['CURRENT']['IDS'] = array_intersect((array) $session['CURRENT']['IDS'], $objDocument->fetchEach('id'));
+                $objSession->replace($session);
+                break;
+
+            default:
+                if (Input::get('act'))
+                {
+                    throw new AccessDeniedException('Invalid command "' . Input::get('act') . '".');
+                }
+
+                if (!\in_array($id, $root))
+                {
+                    throw new AccessDeniedException('Not enough permissions to access document ID ' . $id . '.');
+                }
+                break;
+        }
 	}
 
 
@@ -168,7 +179,7 @@ class Callbacks extends Backend
 			$varValue = StringUtil::standardize(StringUtil::restoreBasicEntities($dc->activeRecord->headline));
 		}
 
-		$objAlias = $this->Database->prepare("SELECT id FROM tl_document WHERE alias=?")
+		$objAlias = Database::getInstance()->prepare("SELECT id FROM tl_document WHERE alias=?")
 								   ->execute($varValue);
 
 		// Check whether the document alias exists
@@ -229,12 +240,14 @@ class Callbacks extends Backend
 		$arrPids = array();
 		$arrAlias = array();
 
-		if (!$this->User->isAdmin)
+        $beUser = BackendUser::getInstance();
+
+		if (!$beUser->isAdmin)
 		{
-			foreach ($this->User->pagemounts as $id)
+			foreach ($beUser->pagemounts as $id)
 			{
 				$arrPids[] = $id;
-				$arrPids = array_merge($arrPids, $this->Database->getChildRecords($id, 'tl_page'));
+				$arrPids = \array_merge($arrPids, Database::getInstance()->getChildRecords($id, 'tl_page'));
 			}
 
 			if (empty($arrPids))
@@ -242,12 +255,12 @@ class Callbacks extends Backend
 				return $arrAlias;
 			}
 
-			$objAlias = $this->Database->prepare("SELECT a.id, a.title, a.inColumn, p.title AS parent FROM tl_article a LEFT JOIN tl_page p ON p.id=a.pid WHERE a.pid IN(". implode(',', array_map('intval', array_unique($arrPids))) .") ORDER BY parent, a.sorting")
+			$objAlias = Database::getInstance()->prepare("SELECT a.id, a.title, a.inColumn, p.title AS parent FROM tl_article a LEFT JOIN tl_page p ON p.id=a.pid WHERE a.pid IN(". \implode(',', \array_map('intval', \array_unique($arrPids))) .") ORDER BY parent, a.sorting")
 									   ->execute($dc->id);
 		}
 		else
 		{
-			$objAlias = $this->Database->prepare("SELECT a.id, a.title, a.inColumn, p.title AS parent FROM tl_article a LEFT JOIN tl_page p ON p.id=a.pid ORDER BY parent, a.sorting")
+			$objAlias = Database::getInstance()->prepare("SELECT a.id, a.title, a.inColumn, p.title AS parent FROM tl_article a LEFT JOIN tl_page p ON p.id=a.pid ORDER BY parent, a.sorting")
 									   ->execute($dc->id);
 		}
 
@@ -272,27 +285,28 @@ class Callbacks extends Backend
 	 */
 	public function getSourceOptions(DataContainer $dc)
 	{
-		if ($this->User->isAdmin)
-		{
+        $beUser = BackendUser::getInstance();
+
+		if ($beUser?->isAdmin) {
 			return array('default', 'internal', 'article', 'external');
 		}
 
 		$arrOptions = array('default');
 
 		// Add the "internal" option
-		if ($this->User->hasAccess('tl_document::jumpTo', 'alexf'))
+		if ($beUser->hasAccess('tl_document::jumpTo', 'alexf'))
 		{
 			$arrOptions[] = 'internal';
 		}
 
 		// Add the "article" option
-		if ($this->User->hasAccess('tl_document::articleId', 'alexf'))
+		if ($beUser->hasAccess('tl_document::articleId', 'alexf'))
 		{
 			$arrOptions[] = 'article';
 		}
 
 		// Add the "external" option
-		if ($this->User->hasAccess('tl_document::url', 'alexf') && $this->User->hasAccess('tl_document::target', 'alexf'))
+		if ($beUser->hasAccess('tl_document::url', 'alexf') && $beUser->hasAccess('tl_document::target', 'alexf'))
 		{
 			$arrOptions[] = 'external';
 		}
@@ -323,7 +337,7 @@ class Callbacks extends Backend
 		$arrSet['date'] = strtotime(date('Y-m-d', $dc->activeRecord->date) . ' ' . date('H:i:s', $dc->activeRecord->time));
 		$arrSet['time'] = $arrSet['date'];
 
-		$this->Database->prepare("UPDATE tl_document %s WHERE id=?")->set($arrSet)->execute($dc->id);
+		Database::getInstance()->prepare("UPDATE tl_document %s WHERE id=?")->set($arrSet)->execute($dc->id);
 	}
 	
 
@@ -334,7 +348,7 @@ class Callbacks extends Backend
 	 */
 	public function pagePicker(DataContainer $dc)
 	{
-		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.StringUtil::specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') === 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
+		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.StringUtil::specialchars(\str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') === 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
 	}
 
 
@@ -350,14 +364,14 @@ class Callbacks extends Backend
 	 */
 	public function iconFeatured($row, $href, $label, $title, $icon, $attributes)
 	{
-		if (strlen(Input::get('fid')))
+		if (\trim((string)Input::get('fid')) !== '')
 		{
 			$this->toggleFeatured(Input::get('fid'), (Input::get('state') == 1));
 			Controller::redirect(System::getReferer());
 		}
 
 		// Check permissions AFTER checking the fid, so hacking attempts are logged
-		if (!$this->User->hasAccess('tl_document::featured', 'alexf'))
+		if (!BackendUser::getInstance()->hasAccess('tl_document::featured', 'alexf'))
 		{
 			return '';
 		}
@@ -385,12 +399,14 @@ class Callbacks extends Backend
 		Input::setGet('id', $intId);
 		Input::setGet('act', 'feature');
 		$this->checkPermission();
+        $beUser = BackendUser::getInstance();
 
 		// Check permissions to feature
-		if (!$this->User->hasAccess('tl_document::featured', 'alexf'))
+		if (!$beUser->hasAccess('tl_document::featured', 'alexf'))
 		{
-			$this->log('Not enough permissions to feature/unfeature document item ID "'.$intId.'"', __METHOD__, TL_ERROR);
-			$this->redirect('contao/main.php?act=error');
+            $message = 'Not enough permissions to feature/unfeature document item ID "'.$intId.'"';
+            System::getContainer()->get('monolog.logger.contao.error')->error($message);
+            throw new AccessDeniedException($message);
 		}
 
 		$objVersions = new Versions('tl_document', $intId);
@@ -415,11 +431,11 @@ class Callbacks extends Backend
 		}
 
 		// Update the database
-		$this->Database->prepare("UPDATE tl_document SET tstamp=". time() .", featured='" . ($blnVisible ? 1 : '') . "' WHERE id=?")
+        Database::getInstance()->prepare("UPDATE tl_document SET tstamp=". time() .", featured='" . ($blnVisible ? 1 : '') . "' WHERE id=?")
 					   ->execute($intId);
 
 		$objVersions->create();
-		$this->log('A new version of record "tl_document.id='.$intId.'" has been created'.$this->getParentEntries('tl_document', $intId), __METHOD__, TL_GENERAL);
+        System::getContainer()->get('monolog.logger.contao.general')->info('A new version of record "tl_document.id='.$intId.'" has been created'.$this->getParentEntries('tl_document', $intId), __METHOD__, TL_GENERAL);
 	}
 
 
@@ -435,14 +451,16 @@ class Callbacks extends Backend
 	 */
 	public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
 	{
-		if (strlen(Input::get('tid')))
+        $beUser = BackendUser::getInstance();
+
+        if (\trim((string)Input::get('tid')) !== '')
 		{
 			$this->toggleVisibility(Input::get('tid'), (Input::get('state') == 1), (@func_get_arg(12) ?: null));
             Controller::redirect(System::getReferer());
 		}
 
 		// Check permissions AFTER checking the tid, so hacking attempts are logged
-		if (!$this->User->hasAccess('tl_document::published', 'alexf'))
+		if (!$beUser->hasAccess('tl_document::published', 'alexf'))
 		{
 			return '';
 		}
@@ -470,12 +488,14 @@ class Callbacks extends Backend
 		Input::setGet('id', $intId);
 		Input::setGet('act', 'toggle');
 		$this->checkPermission();
+        $beUser = BackendUser::getInstance();
 
 		// Check permissions to publish
-		if (!$this->User->hasAccess('tl_document::published', 'alexf'))
+		if (!$beUser->hasAccess('tl_document::published', 'alexf'))
 		{
-			$this->log('Not enough permissions to publish/unpublish document item ID "'.$intId.'"', __METHOD__, TL_ERROR);
-			$this->redirect('contao/main.php?act=error');
+            $message = 'Not enough permissions to publish/unpublish document item ID "'.$intId.'"';
+            System::getContainer()->get('monolog.logger.contao.error')->error($message);
+            throw new AccessDeniedException($message);
 		}
 
 		$objVersions = new Versions('tl_document', $intId);
@@ -500,10 +520,10 @@ class Callbacks extends Backend
 		}
 
 		// Update the database
-		$this->Database->prepare("UPDATE tl_document SET tstamp=". time() .", published='" . ($blnVisible ? 1 : '') . "' WHERE id=?")
+		Database::getInstance()->prepare("UPDATE tl_document SET tstamp=". time() .", published='" . ($blnVisible ? 1 : '') . "' WHERE id=?")
 					   ->execute($intId);
 
 		$objVersions->create();
-		$this->log('A new version of record "tl_document.id='.$intId.'" has been created'.$this->getParentEntries('tl_document', $intId), __METHOD__, TL_GENERAL);
+        System::getContainer()->get('monolog.logger.contao.general')->info('A new version of record "tl_document.id='.$intId.'" has been created'.$this->getParentEntries('tl_document', $intId), __METHOD__, TL_GENERAL);
 	}
 }

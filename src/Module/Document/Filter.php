@@ -8,6 +8,7 @@
 namespace Rhyme\ContaoDocumentsBundle\Module\Document;
 
 use Contao\Input;
+use Contao\StringUtil;
 use Contao\System;
 use Contao\Widget;
 use Contao\PageModel;
@@ -49,7 +50,7 @@ class Filter extends Document_Module
 
 			$objTemplate = new BackendTemplate('be_wildcard');
 
-			$objTemplate->wildcard = '### ' . \utf8_strtoupper($GLOBALS['TL_LANG']['FMD']['documentfilter'][0]) . ' ###';
+			$objTemplate->wildcard = '### ' . \strtoupper($GLOBALS['TL_LANG']['FMD']['documentfilter'][0]) . ' ###';
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
@@ -72,7 +73,7 @@ class Filter extends Document_Module
     {
         global $objPage;
         $arrFilters = array();
-        $arrFields = \deserialize($this->document_filterfields, true);
+        $arrFields = StringUtil::deserialize($this->document_filterfields, true);
 
         if (!empty($arrFields))
         {
@@ -80,7 +81,7 @@ class Filter extends Document_Module
             {
                 $varValue = Input::get($strField) ?: null;
 
-                if ($strField == 'body')
+                if ($strField === 'body')
                 {
                     $objWidget = new FormTextField(array
                     (
@@ -114,9 +115,9 @@ class Filter extends Document_Module
 
         $objJumpTo = $this->jumpTo ? PageModel::findByPk($this->jumpTo) : PageModel::findByPk($objPage->id);
 
-        $this->Template->action					= $this->generateFrontendUrl($objJumpTo->row());
+        $this->Template->action					= $objJumpTo->getFrontendUrl();
         $this->Template->filters				= $arrFilters;
-        $this->Template->targetlistmodules 		= \implode(',', \deserialize($this->document_targetlistmodules, true));
+        $this->Template->targetlistmodules 		= \implode(',', StringUtil::deserialize($this->document_targetlistmodules, true));
         $this->Template->submit_label			= $GLOBALS['TL_LANG']['MSC']['documentfilter_submit'];
     }
 

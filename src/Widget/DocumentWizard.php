@@ -1,18 +1,23 @@
 <?php
 
-/*
- * This file is part of Contao.
+/**
+ *  Document management for Contao Open Source CMS
  *
- * (c) Leo Feyer
+ *  Copyright (c) 2026 Rhyme Digital, LLC.
  *
- * @license LGPL-3.0-or-later
+ *  @link			https://rhyme.digital
+ *  @license		https://www.gnu.org/licenses/lgpl-3.0.txt LGPL
  */
 
 namespace Rhyme\ContaoDocumentsBundle\Widget;
 
+use Contao\Database;
+use Contao\Input;
 use Contao\Image;
+use Contao\System;
 use Contao\Widget;
 use Contao\StringUtil;
+use Rhyme\ContaoDocumentsBundle\Model\Document;
 
 /**
  * Class DocumentWizard
@@ -41,36 +46,59 @@ class DocumentWizard extends Widget
 	 */
 	public function generate()
 	{
-		$this->import('Database');
-
 		$arrButtons = array('copy', 'delete', 'drag', 'up', 'down');
 		$strCommand = 'cmd_' . $this->strField;
 
 		// Change the order
-		if (\Input::get($strCommand) && is_numeric(\Input::get('cid')) && \Input::get('id') == $this->currentRecord)
+		if (Input::get($strCommand) && is_numeric(Input::get('cid')) && Input::get('id') == $this->currentRecord)
 		{
-			switch (\Input::get($strCommand))
+			$intIndex = (int) Input::get('cid');
+			$arrValue = \array_values((array) $this->varValue);
+
+			if (isset($arrValue[$intIndex]))
 			{
-				case 'copy':
-					$this->varValue = array_duplicate($this->varValue, \Input::get('cid'));
-					break;
+				switch (Input::get($strCommand))
+				{
+					case 'copy':
+						// Insert a duplicate right after the original
+						array_splice($arrValue, $intIndex + 1, 0, array($arrValue[$intIndex]));
+						break;
 
-				case 'up':
-					$this->varValue = array_move_up($this->varValue, \Input::get('cid'));
-					break;
+					case 'up':
+						if ($intIndex > 0)
+						{
+							[$arrValue[$intIndex - 1], $arrValue[$intIndex]] = [$arrValue[$intIndex], $arrValue[$intIndex - 1]];
+						}
+						else
+						{
+							// Move the first element to the end
+							$arrValue[] = \array_shift($arrValue);
+						}
+						break;
 
-				case 'down':
-					$this->varValue = array_move_down($this->varValue, \Input::get('cid'));
-					break;
+					case 'down':
+						if ($intIndex + 1 < \count($arrValue))
+						{
+							[$arrValue[$intIndex + 1], $arrValue[$intIndex]] = [$arrValue[$intIndex], $arrValue[$intIndex + 1]];
+						}
+						else
+						{
+							// Move the last element to the beginning
+							\array_unshift($arrValue, \array_pop($arrValue));
+						}
+						break;
 
-				case 'delete':
-					$this->varValue = array_delete($this->varValue, \Input::get('cid'));
-					break;
+					case 'delete':
+						array_splice($arrValue, $intIndex, 1);
+						break;
+				}
+
+				$this->varValue = $arrValue;
 			}
 		}
 
 		// Get all documents
-		$objDocuments = $this->Database->prepare("SELECT id, headline FROM tl_document ORDER BY headline")
+		$objDocuments = Database::getInstance()->prepare("SELECT id, headline FROM tl_document ORDER BY headline")
 									 ->execute();
 
 		// Add the articles module
@@ -82,9 +110,9 @@ class DocumentWizard extends Widget
 		}
 
 		// Get the new value
-		if (\Input::post('FORM_SUBMIT') == $this->strTable)
+		if (Input::post('FORM_SUBMIT') === $this->strTable)
 		{
-			$this->varValue = \Input::post($this->strId);
+			$this->varValue = Input::post($this->strId);
 		}
 
         // Make sure there is at least an empty array
@@ -94,36 +122,29 @@ class DocumentWizard extends Widget
         }
 
         // Adjust rows if they were sorted
-        $this->varValue = array_values($this->varValue);
+        $this->varValue = \array_values((array)$this->varValue);
 
 		// Save the value
-		if (\Input::get($strCommand) || \Input::post('FORM_SUBMIT') == $this->strTable)
+		if (Input::get($strCommand) || Input::post('FORM_SUBMIT') === $this->strTable)
 		{
-			$this->Database->prepare("UPDATE " . $this->strTable . " SET " . $this->strField . "=? WHERE id=?")
+			Database::getInstance()->prepare("UPDATE " . $this->strTable . " SET " . $this->strField . "=? WHERE id=?")
 						   ->execute(serialize($this->varValue), $this->currentRecord);
 		}
-
-		// Initialize the tab index
-		if (!\Cache::has('tabindex'))
-		{
-			\Cache::set('tabindex', 1);
-		}
-
-		$tabindex = \Cache::get('tabindex');
 
 		// Add the label and the return wizard
 		$return = '<table id="ctrl_'.$this->strId.'" class="tl_documentwizard tl_modulewizard" style="margin-top: 15px;">
   <thead>
   <tr>
+    <th></th>
     <th>'.$GLOBALS['TL_LANG']['MSC']['dw_document'].'</th>
     <th>'.$GLOBALS['TL_LANG']['MSC']['dw_label'].'</th>
     <th>&nbsp;</th>
   </tr>
   </thead>
-  <tbody class="sortable" data-tabindex="'.$tabindex.'">';
+  <tbody class="sortable">';
 
-		// Load the tl_article language file
-		\System::loadLanguageFile('tl_document');
+		// Load the document language file
+		System::loadLanguageFile(Document::getTable());
 
 		// Add the input fields
 		for ($i=0, $c=count($this->varValue); $i<$c; $i++)
@@ -133,11 +154,12 @@ class DocumentWizard extends Widget
 			// Add documents
 			foreach ($documents as $v)
 			{
-				$options .= '<option value="'.specialchars($v['id']).'"'.static::optionSelected($v['id'], $this->varValue[$i]['doc']).'>'.$v['headline'].'</option>';
+				$options .= '<option value="'.StringUtil::specialchars($v['id']).'"'.static::optionSelected($v['id'], $this->varValue[$i]['doc']).'>'.$v['headline'].'</option>';
 			}
 
 			$return .= '
   <tr>
+  <td></td>
     <td><select name="'.$this->strId.'['.$i.'][doc]" class="tl_select tl_chosen" tabindex="'.$tabindex++.'" onfocus="Backend.getScrollOffset()">'.$options.'</select></td>';
 
 			$return .= '
@@ -146,9 +168,9 @@ class DocumentWizard extends Widget
 
             foreach ($arrButtons as $button)
             {
-                $class = ($button == 'up' || $button == 'down') ? ' class="button-move" style="visibility: hidden;"' : '';
+                $class = ($button === 'up' || $button === 'down') ? ' class="button-move" style="visibility: hidden;"' : '';
 
-                if ($button == 'drag')
+                if ($button === 'drag')
                 {
                     $return .= ' <button type="button" class="drag-handle" title="' . StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['move']) . '" aria-hidden="true">' . Image::getHtml('drag.svg') . '</button>';
                 }
@@ -162,16 +184,13 @@ class DocumentWizard extends Widget
   </tr>';
 		}
 
-		// Store the tab index
-		\Cache::set('tabindex', $tabindex);
-
 		return $return.'
   </tbody>
   </table>
   <script>
-  window.addEvent(\'domready\', function(){
+  document.addEventListener(\'DOMContentLoaded\', () => {
     // Make this sortable 
-    new Sortables($$(\'#ctrl_'.$this->strId.' tbody\')[0], {
+    new Sortables(document.querySelectorAll(\'ctrl_'.$this->strId.' tbody\')[0], {
         constrain: true,
         opacity: 0.6,
         handle: \'.drag-handle\'

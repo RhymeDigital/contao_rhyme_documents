@@ -13,7 +13,7 @@ namespace Rhyme\ContaoDocumentsBundle\Security;
 
 class Permissions
 {
-    public const USER_CAN_EDIT_DOCUMENTS = 'contao_user.documents';
-    public const USER_CAN_CREATE_DOCUMENTS = 'contao_user.documents.create';
-    public const USER_CAN_DELETE_DOCUMENTS = 'contao_user.documents.delete';
+    public const USER_CAN_EDIT_DOCUMENTS = 'contao_user.document';
+    public const USER_CAN_CREATE_DOCUMENTS = 'contao_user.document.create';
+    public const USER_CAN_DELETE_DOCUMENTS = 'contao_user.document.delete';
 }

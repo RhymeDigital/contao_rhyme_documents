@@ -40,7 +40,7 @@ class Reader extends DocumentModule
 
 			$objTemplate = new BackendTemplate('be_wildcard');
 
-			$objTemplate->wildcard = '### ' . \utf8_strtoupper($GLOBALS['TL_LANG']['FMD']['documentreader'][0]) . ' ###';
+			$objTemplate->wildcard = '### ' . \strtoupper($GLOBALS['TL_LANG']['FMD']['documentreader'][0]) . ' ###';
 			$objTemplate->title = $this->headline;
 			$objTemplate->id = $this->id;
 			$objTemplate->link = $this->name;
@@ -87,7 +87,7 @@ class Reader extends DocumentModule
 
 			// Send a 404 header
 			\header('HTTP/1.1 404 Not Found');
-			$this->Template->document_parsed = '<p class="error">' . \sprintf($GLOBALS['TL_LANG']['MSC']['invalidPage'], Input::get('document')) . '</p>';
+			$this->Template->document_parsed = '<p class="error">' . \sprintf($GLOBALS['TL_LANG']['MSC']['invalidPage'], (string)Input::get('document')) . '</p>';
 			return;
 		}
 

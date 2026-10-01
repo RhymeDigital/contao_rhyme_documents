@@ -1,40 +1,38 @@
 <?php
 
 /**
- * Document management for Contao Open Source CMS
- * @license    http://opensource.org/licenses/lgpl-3.0.html
+ *  Document management for Contao Open Source CMS
+ *
+ *  Copyright (c) 2026 Rhyme Digital, LLC.
+ *
+ *  @link			https://rhyme.digital
+ *  @license		https://www.gnu.org/licenses/lgpl-3.0.txt LGPL
  */
+
+declare(strict_types=1);
  
 namespace Rhyme\ContaoDocumentsBundle\Backend\DocumentArchive;
 
 use Contao\Backend;
-use Contao\CalendarBundle\Security\ContaoCalendarPermissions;
+use Contao\BackendUser;
 use Contao\Controller;
+use Contao\CoreBundle\Exception\AccessDeniedException;
 use Contao\Image;
 use Contao\Input;
 use Contao\StringUtil;
 use Contao\System;
 use Rhyme\ContaoDocumentsBundle\Security\Permissions;
+use Rhyme\ContaoDocumentsBundle\Model\DocumentArchive;
 
-/**
- * Class Callbacks
- *
- * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  Rhyme 2021
-
-
- * @package    Document_Management
- */
 class Callbacks extends Backend
 {
 
 	/**
-	 * Import the back end user object
-	 */
+     * Make constructor public
+     */
 	public function __construct()
 	{
 		parent::__construct();
-		$this->import('Contao\BackendUser', 'User');
 	}
 
 
@@ -43,138 +41,101 @@ class Callbacks extends Backend
 	 */
 	public function checkPermission()
 	{
-		if ($this->User->isAdmin)
-		{
-			return;
-		}
+        $t = DocumentArchive::getTable();
+        $beUser = BackendUser::getInstance();
 
-		// Set root IDs
-		if (!is_array($this->User->document) || empty($this->User->document))
-		{
-			$root = array(0);
-		}
-		else
-		{
-			$root = $this->User->document;
-		}
+        if ($beUser?->isAdmin) {
+            return;
+        }
 
-		$GLOBALS['TL_DCA']['tl_document_archive']['list']['sorting']['root'] = $root;
+        // Set root IDs
+        if (empty($beUser->document) || !is_array($beUser->document)) {
+            $root = array(0);
+        }
+        else {
+            $root = $beUser->document;
+        }
 
+        $GLOBALS['TL_DCA'][$t]['list']['sorting']['root'] = $root;
         $security = System::getContainer()->get('security.helper');
 
-		// Check permissions to add archives
-        if (!$security?->isGranted(Permissions::USER_CAN_CREATE_DOCUMENTS))
-		{
-			$GLOBALS['TL_DCA']['tl_document_archive']['config']['closed'] = true;
-		}
+        // Check permissions to add documents
+        if (!$security->isGranted(Permissions::USER_CAN_CREATE_DOCUMENTS))
+        {
+            $GLOBALS['TL_DCA'][$t]['config']['closed'] = true;
+            $GLOBALS['TL_DCA'][$t]['config']['notCreatable'] = true;
+            $GLOBALS['TL_DCA'][$t]['config']['notCopyable'] = true;
+        }
 
-		// Check current action
-		switch (Input::get('act'))
-		{
-			case 'create':
-			case 'select':
-				// Allow
-				break;
+        // Check permissions to delete documents
+        if (!$security->isGranted(Permissions::USER_CAN_DELETE_DOCUMENTS))
+        {
+            $GLOBALS['TL_DCA'][$t]['config']['notDeletable'] = true;
+        }
 
-			case 'edit':
-				// Dynamically add the record to the user profile
-				if (!in_array(Input::get('id'), $root))
-				{
-					$arrNew = $this->Session->get('new_records');
+        $objSession = System::getContainer()->get('request_stack')->getSession();
 
-					if (is_array($arrNew['tl_document_archive']) && in_array(\Input::get('id'), $arrNew['tl_document_archive']))
-					{
-						// Add permissions on user level
-						if ($this->User->inherit == 'custom' || !$this->User->groups[0])
-						{
-							$objUser = $this->Database->prepare("SELECT document, documentp FROM tl_user WHERE id=?")
-													   ->limit(1)
-													   ->execute($this->User->id);
+        // Check current action
+        switch (Input::get('act'))
+        {
+            case 'select':
+                // Allow
+                break;
 
-							$arrNewp = StringUtil::deserialize($objUser->documentp);
+            case 'create':
+                if (!$security->isGranted(Permissions::USER_CAN_CREATE_DOCUMENTS))
+                {
+                    throw new AccessDeniedException('Not enough permissions to create documents.');
+                }
+                break;
 
-							if (is_array($arrNewp) && in_array('create', $arrNewp))
-							{
-								$arrNews = StringUtil::deserialize($objUser->document);
-								$arrNews[] = Input::get('id');
+            case 'edit':
+            case 'copy':
+            case 'delete':
+            case 'show':
+                if (!in_array(Input::get('id'), $root) || (Input::get('act') === 'delete' && !$security->isGranted(Permissions::USER_CAN_DELETE_DOCUMENTS)))
+                {
+                    throw new AccessDeniedException('Not enough permissions to ' . Input::get('act') . ' document archive ID ' . Input::get('id') . '.');
+                }
+                break;
 
-								$this->Database->prepare("UPDATE tl_user SET document=? WHERE id=?")
-											   ->execute(serialize($arrNews), $this->User->id);
-							}
-						}
+            case 'editAll':
+            case 'deleteAll':
+            case 'overrideAll':
+            case 'copyAll':
+                $session = $objSession->all();
 
-						// Add permissions on group level
-						elseif ($this->User->groups[0] > 0)
-						{
-							$objGroup = $this->Database->prepare("SELECT document, documentp FROM tl_user_group WHERE id=?")
-													   ->limit(1)
-													   ->execute($this->User->groups[0]);
+                if (Input::get('act') === 'deleteAll' && !$security->isGranted(Permissions::USER_CAN_DELETE_DOCUMENTS))
+                {
+                    $session['CURRENT']['IDS'] = array();
+                }
+                else
+                {
+                    $session['CURRENT']['IDS'] = array_intersect((array) $session['CURRENT']['IDS'], $root);
+                }
+                $objSession->replace($session);
+                break;
 
-							$arrNewp = StringUtil::deserialize($objGroup->documentp);
-
-							if (is_array($arrNewp) && in_array('create', $arrNewp))
-							{
-								$arrNews = StringUtil::deserialize($objGroup->document);
-								$arrNews[] = Input::get('id');
-
-								$this->Database->prepare("UPDATE tl_user_group SET document=? WHERE id=?")
-											   ->execute(serialize($arrNews), $this->User->groups[0]);
-							}
-						}
-
-						// Add new element to the user object
-						$root[] = Input::get('id');
-						$this->User->document = $root;
-					}
-				}
-				// No break;
-
-			case 'copy':
-			case 'delete':
-			case 'show':
-				if (!in_array(Input::get('id'), $root) || (Input::get('act') == 'delete' && !$this->User->hasAccess('delete', 'documentp')))
-				{
-					$this->log('Not enough permissions to '.Input::get('act').' document archive ID "'.Input::get('id').'"', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				break;
-
-			case 'editAll':
-			case 'deleteAll':
-			case 'overrideAll':
-				$session = $this->Session->getData();
-				if (\Input::get('act') == 'deleteAll' && !$this->User->hasAccess('delete', 'documentp'))
-				{
-					$session['CURRENT']['IDS'] = array();
-				}
-				else
-				{
-					$session['CURRENT']['IDS'] = array_intersect($session['CURRENT']['IDS'], $root);
-				}
-				$this->Session->setData($session);
-				break;
-
-			default:
-				if (strlen(\Input::get('act')))
-				{
-					$this->log('Not enough permissions to '.\Input::get('act').' document archives', __METHOD__, TL_ERROR);
-					$this->redirect('contao/main.php?act=error');
-				}
-				break;
-		}
+            default:
+                if (Input::get('act'))
+                {
+                    throw new AccessDeniedException('Not enough permissions to ' . Input::get('act') . ' documents.');
+                }
+                break;
+        }
 	}
-	
 
-	/**
-	 * Return the edit header button
-	 * @param array
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @return string
-	 */
+
+    /**
+     * Return the edit header button
+     * @param $row
+     * @param $href
+     * @param $label
+     * @param $title
+     * @param $icon
+     * @param $attributes
+     * @return string
+     */
 	public function editHeader($row, $href, $label, $title, $icon, $attributes)
 	{
         $security = System::getContainer()->get('security.helper');
@@ -189,16 +150,16 @@ class Callbacks extends Backend
 	}
 
 
-	/**
-	 * Return the copy archive button
-	 * @param array
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @return string
-	 */
+    /**
+     * Return the copy archive button
+     * @param $row
+     * @param $href
+     * @param $label
+     * @param $title
+     * @param $icon
+     * @param $attributes
+     * @return string
+     */
 	public function copyArchive($row, $href, $label, $title, $icon, $attributes)
 	{
         $security = System::getContainer()->get('security.helper');
@@ -215,20 +176,21 @@ class Callbacks extends Backend
 
 	/**
 	 * Return the delete archive button
-	 * @param array
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @param string
-	 * @return string
+	 *
+	 * @param array  $row
+     * @param string $href
+     * @param string $label
+     * @param string $title
+	 * @param string $icon
+     * @param string $attributes
+     * @return string
 	 */
 	public function deleteArchive($row, $href, $label, $title, $icon, $attributes)
 	{
         $security = System::getContainer()->get('security.helper');
 
         // Check permissions to add archives
-        if (!$security?->isGranted(Permissions::USER_CAN_EDIT_DOCUMENTS))
+        if (!$security?->isGranted(Permissions::USER_CAN_DELETE_DOCUMENTS))
         {
             return Image::getHtml(preg_replace('/\.gif$/i', '_.gif', $icon)).' ';
         }

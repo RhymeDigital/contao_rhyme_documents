@@ -42,7 +42,7 @@ class Document extends ContentElement
 
 			$objTemplate = new BackendTemplate('be_wildcard');
 
-            $objTemplate->wildcard = '### ' . utf8_strtoupper($GLOBALS['TL_LANG']['CTE']['document_single'][0]) . ($this->objDocument ? ' ('.$this->objDocument->headline.')' : '') . ' ###';
+            $objTemplate->wildcard = '### ' . \strtoupper($GLOBALS['TL_LANG']['CTE']['document_single'][0]) . ($this->objDocument ? ' ('.$this->objDocument->headline.')' : '') . ' ###';
 			$objTemplate->id = $this->id;
 			$objTemplate->href = 'contao/main.php?do=article&amp;table=tl_content&amp;act=edit&amp;id=' . $this->id;
 
