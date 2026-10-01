@@ -9,6 +9,8 @@
 namespace Rhyme\ContaoDocumentsBundle\Backend\Module\Document;
 
 use Contao\Backend;
+use Contao\BackendUser;
+use Contao\Database;
 use Contao\Controller;
 use Contao\ModuleModel;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
@@ -26,7 +28,6 @@ class Callbacks extends Backend
 	public function __construct()
 	{
 		parent::__construct();
-		$this->import('Contao\BackendUser', 'User');
 
         Controller::loadLanguageFile(DocumentModel::getTable());
         Controller::loadDataContainer(DocumentModel::getTable());
@@ -74,9 +75,9 @@ class Callbacks extends Backend
 
         while ($objModules->next())
         {
-            if (stripos($objModules->current()->type, 'document') !== false)
+            if (\stripos($objModules->current()->type, 'document') !== false)
             {
-                $arrReturn[strval($objModules->current()->id)] = $objModules->current()->name;
+                $arrReturn[(string)$objModules->current()->id] = $objModules->current()->name;
             }
         }
 
@@ -90,17 +91,17 @@ class Callbacks extends Backend
 	 */
 	public function getDocumentArchives()
 	{
-		if (!$this->User->isAdmin && !is_array($this->User->document))
+		if (!BackendUser::getInstance()->isAdmin && !is_array(BackendUser::getInstance()->document))
 		{
 			return array();
 		}
 
 		$arrArchives = array();
-		$objArchives = $this->Database->execute("SELECT id, title FROM tl_document_archive ORDER BY title");
+		$objArchives = Database::getInstance()->execute("SELECT id, title FROM tl_document_archive ORDER BY title");
 
 		while ($objArchives->next())
 		{
-			if ($this->User->hasAccess($objArchives->id, 'document'))
+			if (BackendUser::getInstance()->hasAccess($objArchives->id, 'document'))
 			{
 				$arrArchives[$objArchives->id] = $objArchives->title;
 			}
@@ -117,7 +118,7 @@ class Callbacks extends Backend
 	public function getReaderModules()
 	{
 		$arrModules = array();
-		$objModules = $this->Database->execute("SELECT m.id, m.name, t.name AS theme FROM tl_module m LEFT JOIN tl_theme t ON m.pid=t.id WHERE m.type='documentreader' ORDER BY t.name, m.name");
+		$objModules = Database::getInstance()->execute("SELECT m.id, m.name, t.name AS theme FROM tl_module m LEFT JOIN tl_theme t ON m.pid=t.id WHERE m.type='documentreader' ORDER BY t.name, m.name");
 
 		while ($objModules->next())
 		{
@@ -163,6 +164,6 @@ class Callbacks extends Backend
 	 */
 	public function getDocumentTemplates()
 	{
-		return $this->getTemplateGroup('document_');
+		return self::getTemplateGroup('document_');
 	}
 }

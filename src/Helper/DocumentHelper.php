@@ -232,7 +232,7 @@ class DocumentHelper extends Controller
                 static::$arrDownloadCache[$strCacheKey] = '#';
             }
 
-            $allowedDownload = StringUtil::trimsplit(',', \strtolower(Config::get('allowedDownload')));
+            $allowedDownload = StringUtil::trimsplit(',', \strtolower((string)Config::get('allowedDownload')));
 
             // Return if the file type is not allowed
             if (!\in_array($objFile->extension, $allowedDownload))
@@ -256,7 +256,7 @@ class DocumentHelper extends Controller
                 $strHref = \preg_replace('/(&(amp;)?|\?)file=[^&]+/', '', $strHref);
             }
 
-            $strHref .= ((Config::get('disableAlias') || \strpos($strHref, '?') !== false) ? '&amp;' : '?') . 'file=' . System::urlEncode($objFile->path);
+            $strHref .= ((Config::get('disableAlias') || \strpos((string)$strHref, '?') !== false) ? '&amp;' : '?') . 'file=' . System::urlEncode($objFile->path);
 
             static::$arrDownloadCache[$strCacheKey] = $strHref;
         }

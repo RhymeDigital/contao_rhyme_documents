@@ -2,3 +2,11 @@
     background-image: url('../img/document-icon-2.svg');
     background-size: 16px;
 }
+.tl_documentwizard {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 2px;
+}
+.tl_documentwizard td {
+    width: 40%;
+}

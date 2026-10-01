@@ -1,3 +1,6 @@
+<?php
+use Contao\StringUtil;
+?>
 
 <div class="layout_short arc_<?= $this->archive->id; ?> block <?= $this->class; ?>">
 
@@ -5,7 +8,7 @@
     <p class="info"><time datetime="<?= $this->datetime; ?>"><?= $this->date; ?></time> <?= $this->author; ?> <?= $this->commentCount; ?></p>
   <?php endif; ?>
 
-  <h2><a href="<?= $this->download; ?>" title="<?= \Contao\StringUtil::specialchars($this->documentHeadline) ?>"<?= $this->target ?><?= $this->rel ?>><?= $this->documentHeadline; ?></a></h2>
+  <h2><a href="<?= $this->download; ?>" title="<?= StringUtil::specialchars($this->documentHeadline) ?>"<?= $this->target ?><?= $this->rel ?>><?= $this->documentHeadline; ?></a></h2>
 
   <div class="teaser">
     <?= $this->teaser; ?>

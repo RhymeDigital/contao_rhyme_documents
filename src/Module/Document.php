@@ -10,7 +10,7 @@ namespace Rhyme\ContaoDocumentsBundle\Module;
 use Contao\BackendUser;
 use Contao\Module;
 use Contao\StringUtil;
-use FrontendUser;
+use Contao\FrontendUser;
 use Rhyme\ContaoDocumentsBundle\Model\DocumentArchive as DocumentArchiveModel;
 use Rhyme\ContaoDocumentsBundle\Model\Document as DocumentModel;
 
